@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "B站注释器",
+  "version": "1.0.0",
+  "description": "为Bilibili视频添加标注、摘要、标签和评分",
+  "permissions": ["storage", "activeTab"],
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.bilibili.com/video/*"],
+      "js": ["shared/utils.js", "shared/storage.js", "content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "quick-annotate": {
+      "suggested_key": { "default": "Alt+A" },
+      "description": "打开快速添加标注"
+    }
+  }
+}

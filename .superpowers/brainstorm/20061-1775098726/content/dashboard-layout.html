@@ -1,0 +1,95 @@
+<h2>Dashboard Layout</h2>
+<p class="subtitle">The full library view — opened when clicking the extension icon on a non-video page</p>
+
+<div class="mockup">
+  <div class="mockup-header">B站注释器 — 视频库</div>
+  <div class="mockup-body" style="background:#f5f5f5; padding:0; font-size:13px; color:#333;">
+
+    <!-- Top bar -->
+    <div style="background:#fff; padding:12px 20px; border-bottom:1px solid #e0e0e0; display:flex; align-items:center; gap:12px;">
+      <div style="font-weight:700; font-size:16px; color:#00a1d6; min-width:120px;">B站注释器</div>
+      <input class="mock-input" placeholder="🔍 搜索标题、摘要、标注、标签..." style="flex:1; font-size:13px;">
+      <button class="mock-button" style="background:#00a1d6; color:#fff; border:none; padding:6px 14px; border-radius:5px; font-size:12px;">导出数据</button>
+      <button class="mock-button" style="background:#fff; border:1px solid #ddd; padding:6px 14px; border-radius:5px; font-size:12px;">导入数据</button>
+    </div>
+
+    <!-- Filter + Sort bar -->
+    <div style="background:#fff; padding:8px 20px; border-bottom:1px solid #e0e0e0; display:flex; align-items:center; gap:16px; font-size:12px;">
+      <span style="color:#888;">筛选：</span>
+      <span style="padding:3px 10px; border:1px solid #00a1d6; color:#00a1d6; border-radius:12px; cursor:pointer;">标签 ▾</span>
+      <span style="padding:3px 10px; border:1px solid #ddd; color:#666; border-radius:12px; cursor:pointer;">评分 ▾</span>
+      <div style="flex:1;"></div>
+      <span style="color:#888;">排序：</span>
+      <span style="padding:3px 10px; border:1px solid #ddd; color:#666; border-radius:12px; cursor:pointer;">最近观看 ▾</span>
+      <span style="color:#888; font-size:11px;">共 47 个视频</span>
+    </div>
+
+    <!-- Video grid -->
+    <div style="padding:16px 20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+
+      <!-- Card 1 -->
+      <div style="background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:pointer;">
+        <div style="height:90px; background:linear-gradient(135deg,#1a237e,#283593); display:flex; align-items:center; justify-content:center; color:#7986cb; font-size:24px;">🎬</div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:13px; font-weight:600; margin-bottom:4px; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">【教程】Python数据分析入门到精通</div>
+          <div style="font-size:11px; color:#888; margin-bottom:6px;">一线讲解pandas与numpy的核心用法</div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
+            <span style="font-size:10px; padding:1px 7px; background:#e3f2fd; color:#1565c0; border-radius:8px;">教程</span>
+            <span style="font-size:10px; padding:1px 7px; background:#e3f2fd; color:#1565c0; border-radius:8px;">python</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#aaa;">
+            <span>👍 &nbsp;📌 8条标注</span>
+            <span>1月15日</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:pointer;">
+        <div style="height:90px; background:linear-gradient(135deg,#b71c1c,#c62828); display:flex; align-items:center; justify-content:center; color:#ef9a9a; font-size:24px;">🎮</div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:13px; font-weight:600; margin-bottom:4px; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">黑神话悟空全流程无伤攻略 第三章</div>
+          <div style="font-size:11px; color:#888; margin-bottom:6px;">Boss战时机详解，萌新必看</div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
+            <span style="font-size:10px; padding:1px 7px; background:#fce4ec; color:#880e4f; border-radius:8px;">游戏</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#aaa;">
+            <span>⭐⭐⭐⭐⭐ &nbsp;📌 3条标注</span>
+            <span>1月12日</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:pointer;">
+        <div style="height:90px; background:linear-gradient(135deg,#1b5e20,#2e7d32); display:flex; align-items:center; justify-content:center; color:#a5d6a7; font-size:24px;">🍜</div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:13px; font-weight:600; margin-bottom:4px; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">在家复刻外婆的红烧肉，一次成功！</div>
+          <div style="font-size:11px; color:#888; margin-bottom:6px;"></div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
+            <span style="font-size:10px; padding:1px 7px; background:#e8f5e9; color:#2e7d32; border-radius:8px;">美食</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#aaa;">
+            <span>👍 &nbsp;📌 5条标注</span>
+            <span>1月9日</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;">
+  <h3>Dashboard behaviors</h3>
+  <ul style="font-size:13px; line-height:1.8; color:#666;">
+    <li><strong>Icon click on non-video page:</strong> Opens this dashboard in a new tab</li>
+    <li><strong>Icon click on video page:</strong> Toggles the sidebar</li>
+    <li><strong>Search:</strong> Tokenized, Chinese-aware, searches titles + summaries + annotations + tags</li>
+    <li><strong>Card click:</strong> Opens the video on Bilibili in a new tab</li>
+    <li><strong>Thumbnail:</strong> Uses stored <code>og:image</code> URL; falls back to colored gradient placeholder</li>
+    <li><strong>Ratings shown:</strong> 👍/👎 for simple mode, ⭐ stars for detailed mode</li>
+    <li><strong>Sort options:</strong> 最近观看, 添加日期, 标题, 标注数量</li>
+    <li><strong>Filter options:</strong> By tag (multi-select chip picker), by rating type/value</li>
+  </ul>
+</div>
