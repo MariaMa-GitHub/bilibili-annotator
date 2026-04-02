@@ -1,5 +1,5 @@
 const BiliStorage = (() => {
-  const RESERVED_KEYS = ['__settings', '__tags', '__collections'];
+  const RESERVED_KEYS = ['__settings', '__tags'];
 
   const DEFAULT_SETTINGS = {
     sidebarMode: 'overlay',

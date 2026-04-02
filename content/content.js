@@ -985,7 +985,7 @@ function startProgressTracking() {
 
 async function saveProgress() {
   if (!currentRecord || !videoEl) return;
-  if (!videoEl.duration || videoEl.duration === 0) return;
+  if (!videoEl.duration || videoEl.duration === 0 || !isFinite(videoEl.duration)) return;
 
   const now = new Date().toISOString();
   currentRecord.watchProgress = {
