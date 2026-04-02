@@ -267,8 +267,40 @@ function stopProgressTracking() {
 }
 function startFullscreenObserver() {}
 function startShortcutListener() {}
-async function findVideoEl() {}
-function startProgressTracking() {}
+async function findVideoEl() {
+  videoEl = document.querySelector('video');
+  if (videoEl) return videoEl;
+
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 250));
+    videoEl = document.querySelector('video');
+    if (videoEl) return videoEl;
+  }
+  console.debug('[bili-annotator] Video element not found after 10 attempts');
+  return null;
+}
+function startProgressTracking() {
+  if (!videoEl) return;
+
+  progressIntervalId = setInterval(saveProgress, (settings.progressInterval || 30) * 1000);
+
+  window.addEventListener('beforeunload', saveProgress, { once: true });
+}
+
+async function saveProgress() {
+  if (!currentRecord || !videoEl) return;
+  if (!videoEl.duration || videoEl.duration === 0) return;
+
+  const now = new Date().toISOString();
+  currentRecord.watchProgress = {
+    lastWatchedAt: now,
+    lastPosition: Math.floor(videoEl.currentTime),
+    completed: videoEl.currentTime / videoEl.duration > 0.9
+  };
+
+  await BiliStorage.saveVideo(currentBVId, currentRecord);
+  renderProgressBar();
+}
 
 // === BOOTSTRAP ===
 init();
