@@ -68,6 +68,7 @@ Accessible via the ⚙ icon in the sidebar footer.
 | Setting | Default | Description |
 |---|---|---|
 | 侧边栏模式 | 悬浮 | Overlay (floats over page) or 推移 (pushes page content) |
+| 默认展开侧边栏 | Off | When enabled, the sidebar opens automatically on every video page |
 | 键盘快捷键 | `Alt+A` | Shortcut to open annotation form |
 | 进度追踪间隔 | 30s | How often watch progress is saved |
 | Feature toggles | All on | Enable/disable each tab individually |
