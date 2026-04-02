@@ -668,8 +668,139 @@ function renderProgressBar() {
   if (wp.completed) textEl.textContent += ' ✓';
 }
 function renderSettingsPanel() {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">设置即将实现</p>';
+  const content = document.getElementById('ba-tab-content');
+
+  content.innerHTML = `
+    <div class="ba-settings">
+      <div class="ba-settings-title">设置</div>
+
+      <div class="ba-setting-row">
+        <div>
+          <div class="ba-setting-label">侧边栏模式</div>
+        </div>
+        <div class="ba-toggle-group">
+          <button class="ba-toggle-opt ${settings.sidebarMode === 'overlay' ? 'ba-active' : ''}"
+            data-mode="overlay">悬浮</button>
+          <button class="ba-toggle-opt ${settings.sidebarMode === 'push' ? 'ba-active' : ''}"
+            data-mode="push">推移</button>
+        </div>
+      </div>
+
+      <div class="ba-setting-row">
+        <div>
+          <div class="ba-setting-label">键盘快捷键</div>
+          <div class="ba-setting-desc">快速添加标注</div>
+        </div>
+        <div class="ba-key-capture" id="ba-key-capture" tabindex="0">
+          ${settings.shortcutKey || 'Alt+A'}
+        </div>
+      </div>
+
+      <div class="ba-setting-row">
+        <div>
+          <div class="ba-setting-label">进度追踪间隔</div>
+          <div class="ba-setting-desc">秒</div>
+        </div>
+        <input class="ba-number-input" id="ba-progress-interval" type="number"
+          min="5" max="300" value="${settings.progressInterval || 30}">
+      </div>
+
+      <div class="ba-setting-row">
+        <div><div class="ba-setting-label">观看进度追踪</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-feat-watchProgress"
+          ${settings.features.watchProgress ? 'checked' : ''}>
+      </div>
+      <div class="ba-setting-row">
+        <div><div class="ba-setting-label">标注功能</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-feat-annotations"
+          ${settings.features.annotations ? 'checked' : ''}>
+      </div>
+      <div class="ba-setting-row">
+        <div><div class="ba-setting-label">摘要功能</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-feat-summary"
+          ${settings.features.summary ? 'checked' : ''}>
+      </div>
+      <div class="ba-setting-row">
+        <div><div class="ba-setting-label">标签功能</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-feat-tags"
+          ${settings.features.tags ? 'checked' : ''}>
+      </div>
+      <div class="ba-setting-row">
+        <div><div class="ba-setting-label">评分功能</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-feat-rating"
+          ${settings.features.rating ? 'checked' : ''}>
+      </div>
+    </div>
+  `;
+
+  async function saveAndApply() {
+    await BiliStorage.saveSettings(settings);
+  }
+
+  // Sidebar mode toggle
+  content.querySelectorAll('.ba-toggle-opt[data-mode]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      settings.sidebarMode = btn.dataset.mode;
+      content.querySelectorAll('.ba-toggle-opt[data-mode]').forEach(b =>
+        b.classList.toggle('ba-active', b.dataset.mode === settings.sidebarMode));
+      applySidebarMode(settings.sidebarMode);
+      await saveAndApply();
+    });
+  });
+
+  // Key capture
+  const keyCaptureEl = document.getElementById('ba-key-capture');
+  keyCaptureEl.addEventListener('focus', () => {
+    keyCaptureEl.textContent = '按下快捷键...';
+    keyCaptureEl.style.color = '#00a1d6';
+  });
+  keyCaptureEl.addEventListener('keydown', async (e) => {
+    e.preventDefault();
+    const parts = [];
+    if (e.ctrlKey) parts.push('Ctrl');
+    if (e.altKey) parts.push('Alt');
+    if (e.shiftKey) parts.push('Shift');
+    const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) parts.push(key);
+    if (parts.length > 1) {
+      settings.shortcutKey = parts.join('+');
+      keyCaptureEl.textContent = settings.shortcutKey;
+      keyCaptureEl.style.color = '';
+      keyCaptureEl.blur();
+      await saveAndApply();
+    }
+  });
+  keyCaptureEl.addEventListener('blur', () => {
+    keyCaptureEl.textContent = settings.shortcutKey || 'Alt+A';
+    keyCaptureEl.style.color = '';
+  });
+
+  // Progress interval
+  const intervalEl = document.getElementById('ba-progress-interval');
+  intervalEl.addEventListener('change', async () => {
+    const val = parseInt(intervalEl.value, 10);
+    if (val >= 5 && val <= 300) {
+      settings.progressInterval = val;
+      // Restart interval with new value
+      stopProgressTracking();
+      if (settings.features.watchProgress && videoEl) startProgressTracking();
+      await saveAndApply();
+    }
+  });
+
+  // Feature toggles
+  ['watchProgress', 'annotations', 'summary', 'tags', 'rating'].forEach(feat => {
+    const el = document.getElementById(`ba-feat-${feat}`);
+    if (!el) return;
+    el.addEventListener('change', async () => {
+      settings.features[feat] = el.checked;
+      if (feat === 'watchProgress') {
+        if (el.checked) { await findVideoEl(); startProgressTracking(); }
+        else stopProgressTracking();
+      }
+      await saveAndApply();
+    });
+  });
 }
 function startNavObserver() {
   const titleEl = document.querySelector('head title');
@@ -731,7 +862,29 @@ function stopProgressTracking() {
     progressIntervalId = null;
   }
 }
-function startFullscreenObserver() {}
+function startFullscreenObserver() {
+  const hint = document.getElementById('bili-annotator-fullscreen-hint');
+  const root = document.getElementById('bili-annotator-root');
+
+  function onFullscreenChange(isFullscreen) {
+    if (!root || !hint) return;
+    root.style.display = isFullscreen ? 'none' : '';
+    hint.classList.toggle('ba-visible', isFullscreen);
+  }
+
+  // Standard fullscreen API
+  document.addEventListener('fullscreenchange', () => {
+    onFullscreenChange(!!document.fullscreenElement);
+  });
+
+  // Bilibili full-webpage mode: watch for class changes on body
+  const bodyObserver = new MutationObserver(() => {
+    const isFullWin = document.body.classList.contains('player-full-win') ||
+      !!document.querySelector('.player-full-win');
+    onFullscreenChange(isFullWin || !!document.fullscreenElement);
+  });
+  bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+}
 function startShortcutListener() {
   document.addEventListener('keydown', (e) => {
     const key = settings.shortcutKey || 'Alt+A';
