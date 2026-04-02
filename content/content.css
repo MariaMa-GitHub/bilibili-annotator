@@ -92,9 +92,19 @@ body.ba-push-mode.ba-sidebar-collapsed {
 
 .ba-progress-text {
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ba-progress-primary {
+  color: #888;
+}
+
+.ba-progress-secondary {
+  font-size: 10px;
+  color: #bbb;
+  font-variant-numeric: tabular-nums;
 }
 
 .ba-progress-bar-track {

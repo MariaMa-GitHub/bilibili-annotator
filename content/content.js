@@ -733,23 +733,27 @@ function renderProgressBar() {
   }
 
   const date = new Date(wp.lastWatchedAt);
-  const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
 
   const liveDuration = (videoEl && videoEl.duration > 0) ? videoEl.duration : 0;
   const duration = liveDuration || wp.duration || 0;
-  let percentStr = '';
+
+  let primary = `上次观看：${dateStr}`;
+  let secondary = '';
   if (duration > 0) {
     const pct = Math.round((wp.lastPosition / duration) * 100);
-    const posStr = formatTimestamp(wp.lastPosition);
-    const durStr = formatTimestamp(duration);
-    percentStr = ` — 已观看 ${posStr} / ${durStr} (${pct}%)`;
+    primary += ` — ${pct}%`;
+    if (wp.completed) primary += ' ✓';
+    secondary = `${formatTimestamp(wp.lastPosition)} / ${formatTimestamp(duration)}`;
     fillEl.style.width = `${pct}%`;
   } else {
+    if (wp.completed) primary += ' ✓';
     fillEl.style.width = '0%';
   }
 
-  textEl.textContent = `上次观看：${dateStr}${percentStr}`;
-  if (wp.completed) textEl.textContent += ' ✓';
+  textEl.innerHTML = `<span class="ba-progress-primary">${primary}</span>${
+    secondary ? `<span class="ba-progress-secondary">${secondary}</span>` : ''
+  }`;
 }
 function renderSettingsPanel() {
   const content = document.getElementById('ba-tab-content');
