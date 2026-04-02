@@ -380,8 +380,59 @@ async function deleteAnnotation(id) {
   renderAnnotationsTab();
 }
 function renderSummaryTab() {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">摘要功能即将实现</p>';
+  const content = document.getElementById('ba-tab-content');
+  const short = currentRecord?.summaryShort || '';
+  const long = currentRecord?.summaryLong || '';
+
+  content.innerHTML = `
+    <div class="ba-field-group">
+      <div class="ba-summary-label">
+        <span>简短摘要</span>
+        <span class="ba-char-counter" id="ba-short-counter">${short.length}/150</span>
+      </div>
+      <input class="ba-input" id="ba-summary-short" type="text" maxlength="150"
+        value="${escapeHtml(short)}" placeholder="一句话描述这个视频...">
+    </div>
+    <div class="ba-field-group">
+      <div class="ba-summary-label"><span>详细摘要</span></div>
+      <textarea class="ba-textarea" id="ba-summary-long" rows="8"
+        placeholder="详细描述、笔记、想法...">${escapeHtml(long)}</textarea>
+    </div>
+  `;
+
+  const shortInput = document.getElementById('ba-summary-short');
+  const longInput = document.getElementById('ba-summary-long');
+  const counter = document.getElementById('ba-short-counter');
+
+  const saveSummary = debounce(async () => {
+    if (!currentRecord) return;
+    currentRecord.summaryShort = shortInput.value;
+    currentRecord.summaryLong = longInput.value;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  }, 1000);
+
+  shortInput.addEventListener('input', () => {
+    const len = shortInput.value.length;
+    counter.textContent = `${len}/150`;
+    counter.classList.toggle('ba-over', len > 150);
+    saveSummary();
+  });
+
+  shortInput.addEventListener('blur', async () => {
+    if (!currentRecord) return;
+    currentRecord.summaryShort = shortInput.value;
+    currentRecord.summaryLong = longInput.value;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  });
+
+  longInput.addEventListener('input', saveSummary);
+
+  longInput.addEventListener('blur', async () => {
+    if (!currentRecord) return;
+    currentRecord.summaryShort = shortInput.value;
+    currentRecord.summaryLong = longInput.value;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  });
 }
 function renderTagsTab() {
   document.getElementById('ba-tab-content').innerHTML =
