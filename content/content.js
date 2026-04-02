@@ -38,12 +38,52 @@ async function init() {
   });
 }
 
+async function captureThumbnailAsDataUrl(url) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    const bitmapUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = bitmapUrl;
+    });
+    const MAX_W = 320, MAX_H = 180;
+    let w = img.width, h = img.height;
+    if (w > MAX_W || h > MAX_H) {
+      const ratio = Math.min(MAX_W / w, MAX_H / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(bitmapUrl);
+    return canvas.toDataURL('image/jpeg', 0.7);
+  } catch (e) {
+    return null;
+  }
+}
+
 async function loadVideo() {
   const title = document.querySelector('h1')?.textContent?.trim() || currentBVId;
   const url = window.location.href;
   const thumbnailUrl = document.querySelector('meta[property="og:image"]')?.content || null;
 
   currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url, thumbnailUrl);
+
+  // Convert HTTP thumbnail URLs to data URLs so dashboard can load them
+  // (Bilibili CDN rejects requests without a bilibili.com referer)
+  if (currentRecord.thumbnailUrl && currentRecord.thumbnailUrl.startsWith('http')) {
+    const dataUrl = await captureThumbnailAsDataUrl(currentRecord.thumbnailUrl);
+    if (dataUrl) {
+      currentRecord.thumbnailUrl = dataUrl;
+      await BiliStorage.saveVideo(currentBVId, currentRecord);
+    }
+  }
   isMultiPart = !!document.querySelector('.video-sections-content') ||
                 extractPartNumber(url) > 1;
 
