@@ -160,9 +160,120 @@ function renderActiveTab() {
 
 // === PLACEHOLDERS (implemented in later tasks) ===
 function renderAnnotationsTab() {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">标注功能即将实现</p>';
+  const content = document.getElementById('ba-tab-content');
+  const annotations = currentRecord?.annotations || [];
+
+  const visible = showAllParts
+    ? [...annotations].sort((a, b) => a.timestampStart - b.timestampStart)
+    : annotations
+        .filter(a => (a.partNumber || 1) === currentPart)
+        .sort((a, b) => a.timestampStart - b.timestampStart);
+
+  const BADGE_MAP = {
+    highlight: ['精彩', 'ba-badge-highlight'],
+    important: ['重要', 'ba-badge-important'],
+    funny:     ['搞笑', 'ba-badge-funny'],
+    note:      ['笔记', 'ba-badge-note'],
+    custom:    ['自定义', 'ba-badge-custom']
+  };
+
+  let html = '';
+
+  if (isMultiPart) {
+    html += `<span class="ba-part-toggle" id="ba-part-toggle">
+      ${showAllParts ? '仅显示当前分P' : '显示全部分P'}
+    </span>`;
+  }
+
+  html += '<div class="ba-annotation-list">';
+
+  if (visible.length === 0) {
+    html += '<p class="ba-empty">暂无标注</p>';
+  } else {
+    for (const ann of visible) {
+      const [badgeLabel, badgeClass] = BADGE_MAP[ann.category] || ['笔记', 'ba-badge-note'];
+      const tsDisplay = formatTimestamp(ann.timestampStart);
+      const tsEnd = ann.timestampEnd != null
+        ? `<span class="ba-annotation-ts-range">→ ${formatTimestamp(ann.timestampEnd)}</span>`
+        : '';
+      const partBadge = showAllParts && isMultiPart
+        ? `<span class="ba-part-badge">P${ann.partNumber || 1}</span>`
+        : '';
+
+      html += `
+        <div class="ba-annotation-item" data-id="${ann.id}">
+          <div class="ba-annotation-ts" data-ts="${ann.timestampStart}">
+            ${tsDisplay}${tsEnd}
+          </div>
+          <div class="ba-annotation-body">
+            <div class="ba-annotation-label">${partBadge}${escapeHtml(ann.label)}</div>
+            <span class="ba-badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <div class="ba-annotation-actions">
+            <button class="ba-icon-btn ba-edit-btn" data-id="${ann.id}" title="编辑">✏️</button>
+            <button class="ba-icon-btn ba-delete-btn" data-id="${ann.id}" title="删除">🗑</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  html += '</div>';
+  html += `<button class="ba-add-btn" id="ba-add-annotation-btn">+ 添加标注</button>`;
+
+  content.innerHTML = html;
+
+  // Event: toggle all parts
+  document.getElementById('ba-part-toggle')?.addEventListener('click', () => {
+    showAllParts = !showAllParts;
+    renderAnnotationsTab();
+  });
+
+  // Event: seek on timestamp click
+  content.querySelectorAll('.ba-annotation-ts').forEach(el => {
+    el.addEventListener('click', () => {
+      const ts = parseFloat(el.dataset.ts);
+      seekTo(ts);
+    });
+  });
+
+  // Event: edit button
+  content.querySelectorAll('.ba-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ann = (currentRecord?.annotations || []).find(a => a.id === btn.dataset.id);
+      if (ann) openAnnotationForm(ann);
+    });
+  });
+
+  // Event: delete button
+  content.querySelectorAll('.ba-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteAnnotation(btn.dataset.id));
+  });
+
+  // Event: add button
+  document.getElementById('ba-add-annotation-btn')?.addEventListener('click', () => {
+    openAnnotationForm(null);
+  });
 }
+
+function seekTo(seconds) {
+  if (!videoEl) videoEl = document.querySelector('video');
+  if (videoEl) videoEl.currentTime = seconds;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Stubs for next task
+function openAnnotationForm(ann) {
+  document.getElementById('ba-tab-content').innerHTML =
+    '<p class="ba-empty">表单即将实现</p>';
+}
+async function deleteAnnotation(id) {}
 function renderSummaryTab() {
   document.getElementById('ba-tab-content').innerHTML =
     '<p class="ba-empty">摘要功能即将实现</p>';
