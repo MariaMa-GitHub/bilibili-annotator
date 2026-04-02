@@ -434,9 +434,114 @@ function renderSummaryTab() {
     await BiliStorage.saveVideo(currentBVId, currentRecord);
   });
 }
+const PREDEFINED_TAGS = ['游戏', '音乐', '教程', '电影', '动漫', '美食', '科技', '日常', '纪录片', '搞笑', '教育', '体育', '新闻', '测评'];
+
 function renderTagsTab() {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">标签功能即将实现</p>';
+  const content = document.getElementById('ba-tab-content');
+  const currentTags = currentRecord?.tags || [];
+
+  const chipsHtml = currentTags.map(tag => `
+    <span class="ba-chip">
+      ${escapeHtml(tag)}
+      <button class="ba-chip-remove" data-tag="${escapeHtml(tag)}" title="移除">✕</button>
+    </span>`).join('');
+
+  content.innerHTML = `
+    <div class="ba-tags-chips" id="ba-tags-chips">${chipsHtml}</div>
+    <div class="ba-tag-input-wrap">
+      <input class="ba-input" id="ba-tag-input" type="text" placeholder="添加标签，按回车确认...">
+      <div class="ba-suggestions" id="ba-tag-suggestions" style="display:none;"></div>
+    </div>
+  `;
+
+  // Remove tag events
+  content.querySelectorAll('.ba-chip-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeTagFromVideo(btn.dataset.tag));
+  });
+
+  const input = document.getElementById('ba-tag-input');
+  const suggestionsEl = document.getElementById('ba-tag-suggestions');
+
+  // Show suggestions on focus/input
+  async function updateSuggestions() {
+    const query = input.value.trim().toLowerCase();
+    const allStoredTags = await BiliStorage.getTags();
+
+    // Predefined first, then user tags, excluding already-applied
+    const normalizedCurrent = currentTags.map(normalizeTag);
+    const combined = [
+      ...PREDEFINED_TAGS.filter(t => !normalizedCurrent.includes(normalizeTag(t))),
+      ...allStoredTags.filter(t => !normalizedCurrent.includes(normalizeTag(t)) &&
+        !PREDEFINED_TAGS.some(p => normalizeTag(p) === normalizeTag(t)))
+    ];
+
+    const filtered = query
+      ? combined.filter(t => normalizeTag(t).includes(query))
+      : combined.slice(0, 10);
+
+    if (filtered.length === 0) {
+      suggestionsEl.style.display = 'none';
+      return;
+    }
+
+    suggestionsEl.innerHTML = filtered
+      .map(t => `<div class="ba-suggestion" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</div>`)
+      .join('');
+    suggestionsEl.style.display = 'block';
+
+    suggestionsEl.querySelectorAll('.ba-suggestion').forEach(el => {
+      el.addEventListener('click', () => {
+        addTagToVideo(el.dataset.tag);
+        input.value = '';
+        suggestionsEl.style.display = 'none';
+      });
+    });
+  }
+
+  input.addEventListener('focus', updateSuggestions);
+  input.addEventListener('input', updateSuggestions);
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = input.value.trim();
+      if (val) {
+        addTagToVideo(val);
+        input.value = '';
+        suggestionsEl.style.display = 'none';
+      }
+    }
+    if (e.key === 'Escape') {
+      suggestionsEl.style.display = 'none';
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!content.contains(e.target)) suggestionsEl.style.display = 'none';
+  }, { once: true });
+}
+
+async function addTagToVideo(rawTag) {
+  if (!currentRecord) return;
+  const tag = normalizeTag(rawTag) === rawTag.toLowerCase()
+    ? normalizeTag(rawTag)
+    : rawTag; // normalized for ASCII, original for Chinese
+  const normalized = normalizeTag(tag);
+  if ((currentRecord.tags || []).some(t => normalizeTag(t) === normalized)) return;
+
+  currentRecord.tags = [...(currentRecord.tags || []), tag];
+  await BiliStorage.saveVideo(currentBVId, currentRecord);
+  await BiliStorage.addTagToIndex(tag);
+  renderTagsTab();
+}
+
+async function removeTagFromVideo(tag) {
+  if (!currentRecord) return;
+  const normalized = normalizeTag(tag);
+  currentRecord.tags = (currentRecord.tags || []).filter(t => normalizeTag(t) !== normalized);
+  await BiliStorage.saveVideo(currentBVId, currentRecord);
+  await BiliStorage.removeTagFromIndex(tag);
+  renderTagsTab();
 }
 function renderRatingTab() {
   document.getElementById('ba-tab-content').innerHTML =
