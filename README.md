@@ -1,89 +1,91 @@
-# B站注释器 — Bilibili Annotator
+# B站注释器
 
-A Chrome extension for annotating Bilibili videos. Add timestamped notes, summaries, tags, and ratings to any video — all stored locally in your browser.
+一款用于标注 Bilibili 视频的 Chrome 扩展。为任意视频添加带时间戳的笔记、摘要、标签和评分——所有数据均存储在本地浏览器中。
 
----
-
-## Features
-
-- **Annotations** — Add timestamped notes to any point in a video. Click a timestamp to seek directly to it. Categorize annotations as 精彩 / 重要 / 搞笑 / 笔记 / 自定义.
-- **Summary** — Write a short and long summary per video. Auto-saves as you type.
-- **Tags** — Tag videos for easy filtering later. Autocomplete from your own tag history and a built-in list of common categories.
-- **Rating** — Like/dislike or 1–5 star rating, plus a free-text rating note.
-- **Watch progress** — Automatically tracks how far you've watched and when you last watched.
-- **Dashboard** — Browse your entire library in one page. Search across titles, summaries, annotation text, and tags. Filter by tag or rating. Sort by last watched, date added, title, or annotation count.
-- **Export / Import** — Export your full library as a JSON file and import it on another machine.
-
-All data is stored locally via `chrome.storage.local`. Nothing is sent to any server.
+[English](README.en.md)
 
 ---
 
-## Installation
+## 功能
 
-This extension is not on the Chrome Web Store. Load it as an unpacked extension:
+- **标注** — 为视频中的任意时间点添加笔记。点击时间戳可直接跳转至对应位置。支持分类：精彩 / 重要 / 搞笑 / 笔记 / 自定义。
+- **摘要** — 为每个视频编写短摘要和长摘要，输入时自动保存。
+- **标签** — 为视频添加标签，便于后续筛选。支持从历史标签和内置常用分类中自动补全。
+- **评分** — 点赞/点踩或 1–5 星评分，附带自由文本评价理由。
+- **观看进度** — 自动记录观看进度和上次观看时间。
+- **视频库** — 在一个页面浏览全部视频记录。可按标题、摘要、标注内容和标签搜索；按标签或评分筛选；按最近观看、添加日期、标题或标注数量排序。
+- **导出 / 导入** — 将完整数据导出为 JSON 文件，并可在其他设备上导入。
 
-1. Clone or download this repo.
-2. Open `chrome://extensions` in Chrome.
-3. Enable **Developer mode** (top-right toggle).
-4. Click **Load unpacked** and select the project root folder.
-
----
-
-## Usage
-
-### Sidebar
-
-The sidebar appears on any `bilibili.com/video/*` page.
-
-- **Toggle** — click the tab on the right edge of the screen, or click the extension icon.
-- **Keyboard shortcut** — `Alt+A` opens the annotation form pre-filled with the current timestamp. Configurable in Settings.
-- **Fullscreen** — the sidebar hides automatically in fullscreen and full-webpage mode. A small 📋 icon appears as a reminder.
-
-### Dashboard
-
-Click the extension icon on any non-Bilibili page to open the dashboard in a new tab.
-
-### Export / Import
-
-In the dashboard, use **导出数据** to download a `.json` backup. Use **导入数据** to restore — choose to skip existing records or overwrite them.
+所有数据通过 `chrome.storage.local` 存储在本地，不会向任何服务器发送数据。
 
 ---
 
-## Keyboard Shortcut
+## 安装
 
-| Shortcut | Action |
+本扩展未上架 Chrome 网上应用店，需以开发者模式加载：
+
+1. 克隆或下载本仓库。
+2. 在 Chrome 中打开 `chrome://extensions`。
+3. 启用右上角的**开发者模式**。
+4. 点击**加载已解压的扩展程序**，选择项目根目录。
+
+---
+
+## 使用方法
+
+### 侧边栏
+
+侧边栏会在所有 `bilibili.com/video/*` 页面上显示。
+
+- **展开/收起** — 点击屏幕右侧的标签页，或点击扩展图标。
+- **键盘快捷键** — `Alt+A` 打开标注表单，并自动填入当前时间戳。可在设置中修改。
+- **全屏模式** — 进入全屏或网页全屏时侧边栏自动隐藏，右下角会显示一个 📋 小图标提示。
+
+### 视频库
+
+在任意非 Bilibili 页面点击扩展图标，即可在新标签页中打开视频库。
+
+### 导出 / 导入
+
+在视频库页面，点击**导出数据**下载 `.json` 备份文件；点击**导入数据**恢复数据，可选择跳过已有记录或覆盖已有记录。
+
+---
+
+## 键盘快捷键
+
+| 快捷键 | 功能 |
 |---|---|
-| `Alt+A` | Open annotation form at current timestamp |
+| `Alt+A` | 打开标注表单（自动填入当前时间戳） |
 
-The shortcut is configurable in the sidebar's Settings panel (⚙).
+可在侧边栏底部的设置面板（⚙）中自定义快捷键。
 
 ---
 
-## Settings
+## 设置
 
-Accessible via the ⚙ icon in the sidebar footer.
+点击侧边栏底部的 ⚙ 图标进入设置。
 
-| Setting | Default | Description |
+| 设置项 | 默认值 | 说明 |
 |---|---|---|
-| 侧边栏模式 | 悬浮 | Overlay (floats over page) or 推移 (pushes page content) |
-| 键盘快捷键 | `Alt+A` | Shortcut to open annotation form |
-| 进度追踪间隔 | 30s | How often watch progress is saved |
-| Feature toggles | All on | Enable/disable each tab individually |
+| 侧边栏模式 | 悬浮 | 悬浮（浮于页面上方）或推移（将页面内容向左推） |
+| 键盘快捷键 | `Alt+A` | 打开标注表单的快捷键 |
+| 进度追踪间隔 | 30 秒 | 观看进度的保存频率 |
+| 功能开关 | 全部开启 | 可单独启用或禁用每个功能标签 |
 
 ---
 
-## Data
+## 数据说明
 
-All data lives in `chrome.storage.local` under the extension's origin. No external requests are made.
+所有数据存储在扩展的 `chrome.storage.local` 中，不会发起任何外部请求。
 
-Each video is stored by its BV ID. The export format is plain JSON — human-readable and easy to process with other tools.
+每个视频以 BV 号为键存储。导出格式为纯 JSON，便于阅读和用其他工具处理。
 
 ---
 
-## Technical notes
+## 技术说明
 
 - Manifest V3
-- Vanilla JS (ES2020+), no frameworks, no build tools
-- No external dependencies
-- Content scripts share scope via manifest load order (`utils.js` → `storage.js` → `content.js`)
-- Bilibili SPA navigation is detected via `MutationObserver` on the page `<title>`
+- 原生 JS（ES2020+），无框架，无构建工具
+- 无外部依赖
+- 内容脚本通过 manifest 加载顺序共享作用域（`utils.js` → `storage.js` → `content.js`）
+- Bilibili SPA 页面导航通过监听 `<title>` 的 `MutationObserver` 检测
