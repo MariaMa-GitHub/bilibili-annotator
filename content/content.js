@@ -544,8 +544,98 @@ async function removeTagFromVideo(tag) {
   renderTagsTab();
 }
 function renderRatingTab() {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">评分功能即将实现</p>';
+  const content = document.getElementById('ba-tab-content');
+  const rec = currentRecord || {};
+
+  content.innerHTML = `
+    <div class="ba-rating-mode-toggle">
+      <button class="ba-mode-btn ${ratingMode === 'simple' ? 'ba-active' : ''}"
+        id="ba-mode-simple">简单</button>
+      <button class="ba-mode-btn ${ratingMode === 'detailed' ? 'ba-active' : ''}"
+        id="ba-mode-detailed">详细</button>
+    </div>
+
+    <div id="ba-simple-rating" style="${ratingMode === 'simple' ? '' : 'display:none'}">
+      <div class="ba-simple-rating">
+        <button class="ba-reaction-btn ${rec.rating === 'like' ? 'ba-selected-like' : ''}"
+          id="ba-btn-like">👍<br><span style="font-size:11px">喜欢</span></button>
+        <button class="ba-reaction-btn ${rec.rating === 'dislike' ? 'ba-selected-dislike' : ''}"
+          id="ba-btn-dislike">👎<br><span style="font-size:11px">不喜欢</span></button>
+      </div>
+    </div>
+
+    <div id="ba-detailed-rating" style="${ratingMode === 'detailed' ? '' : 'display:none'}">
+      <div class="ba-stars" id="ba-stars">
+        ${[1,2,3,4,5].map(n => `
+          <span class="ba-star ${(rec.starRating || 0) >= n ? 'ba-filled' : ''}"
+            data-n="${n}">★</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px;">
+        ${rec.starRating ? `${rec.starRating}/5` : '未评分'}
+      </div>
+    </div>
+
+    <div class="ba-field-group">
+      <div class="ba-rating-note-label">评价理由（选填）</div>
+      <textarea class="ba-textarea" id="ba-rating-note" rows="3"
+        placeholder="为什么给这个评分？">${escapeHtml(rec.ratingNote || '')}</textarea>
+    </div>
+  `;
+
+  // Mode toggle
+  document.getElementById('ba-mode-simple').addEventListener('click', () => {
+    ratingMode = 'simple';
+    renderRatingTab();
+  });
+  document.getElementById('ba-mode-detailed').addEventListener('click', () => {
+    ratingMode = 'detailed';
+    renderRatingTab();
+  });
+
+  // Like / dislike
+  document.getElementById('ba-btn-like').addEventListener('click', async () => {
+    currentRecord.rating = currentRecord.rating === 'like' ? null : 'like';
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+    renderRatingTab();
+  });
+  document.getElementById('ba-btn-dislike').addEventListener('click', async () => {
+    currentRecord.rating = currentRecord.rating === 'dislike' ? null : 'dislike';
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+    renderRatingTab();
+  });
+
+  // Stars
+  const stars = document.querySelectorAll('.ba-star');
+  stars.forEach(star => {
+    star.addEventListener('mouseover', () => {
+      const n = parseInt(star.dataset.n);
+      stars.forEach(s => s.classList.toggle('ba-hover', parseInt(s.dataset.n) <= n));
+    });
+    star.addEventListener('mouseout', () => {
+      stars.forEach(s => s.classList.remove('ba-hover'));
+    });
+    star.addEventListener('click', async () => {
+      const n = parseInt(star.dataset.n);
+      currentRecord.starRating = currentRecord.starRating === n ? null : n;
+      await BiliStorage.saveVideo(currentBVId, currentRecord);
+      renderRatingTab();
+    });
+  });
+
+  // Rating note
+  const noteEl = document.getElementById('ba-rating-note');
+  const saveNote = debounce(async () => {
+    if (!currentRecord) return;
+    currentRecord.ratingNote = noteEl.value;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  }, 1000);
+
+  noteEl.addEventListener('input', saveNote);
+  noteEl.addEventListener('blur', async () => {
+    if (!currentRecord) return;
+    currentRecord.ratingNote = noteEl.value;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  });
 }
 function renderProgressBar() {
   const textEl = document.querySelector('.ba-progress-text');
