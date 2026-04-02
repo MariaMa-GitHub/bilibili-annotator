@@ -247,8 +247,9 @@ function renderAnnotationsTab() {
         ? `<span class="ba-part-badge">P${ann.partNumber || 1}</span>`
         : '';
 
+      const colorStyle = ann.color ? `border-left: 3px solid ${ann.color}; padding-left: 5px;` : '';
       html += `
-        <div class="ba-annotation-item" data-id="${ann.id}">
+        <div class="ba-annotation-item" data-id="${ann.id}" style="${colorStyle}">
           <div class="ba-annotation-ts" data-ts="${ann.timestampStart}">
             ${tsDisplay}${tsEnd}
           </div>
@@ -324,6 +325,7 @@ function openAnnotationForm(existingAnn) {
   const label = existingAnn?.label || '';
   const category = existingAnn?.category || 'note';
   const partNum = existingAnn?.partNumber || currentPart;
+  let formColor = existingAnn?.color || null;
 
   const partRow = isMultiPart ? `
     <div class="ba-form-row">
@@ -364,6 +366,17 @@ function openAnnotationForm(existingAnn) {
           </select>
         </div>
       </div>
+      <div class="ba-form-row">
+        <div class="ba-form-field">
+          <label>颜色标记（选填）</label>
+          <div class="ba-color-picker" id="ba-color-picker">
+            <span class="ba-color-dot ba-color-none ${!formColor ? 'ba-color-selected' : ''}" data-color="" title="无">✕</span>
+            ${ANNOTATION_COLORS.map(c =>
+              `<span class="ba-color-dot ${formColor === c.value ? 'ba-color-selected' : ''}" data-color="${c.value}" title="${c.label}" style="background:${c.value}"></span>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
       <div class="ba-form-actions">
         <button class="ba-btn ba-btn-primary" id="ba-form-save">保存</button>
         <button class="ba-btn ba-btn-secondary" id="ba-form-cancel">取消</button>
@@ -372,6 +385,14 @@ function openAnnotationForm(existingAnn) {
   `;
 
   document.getElementById('ba-form-label').focus();
+
+  content.querySelectorAll('.ba-color-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      formColor = dot.dataset.color || null;
+      content.querySelectorAll('.ba-color-dot').forEach(d => d.classList.remove('ba-color-selected'));
+      dot.classList.add('ba-color-selected');
+    });
+  });
 
   document.getElementById('ba-form-cancel').addEventListener('click', () => {
     renderAnnotationsTab();
@@ -398,7 +419,8 @@ function openAnnotationForm(existingAnn) {
       timestampStart: tsStartVal,
       timestampEnd: tsEndVal,
       label: labelVal,
-      category: catVal
+      category: catVal,
+      color: formColor
     };
 
     saveAnnotation(annData, existingAnn?.id);
@@ -482,6 +504,17 @@ function renderSummaryTab() {
   });
 }
 const PREDEFINED_TAGS = ['游戏', '音乐', '教程', '电影', '动漫', '美食', '科技', '日常', '纪录片', '搞笑', '教育', '体育', '新闻', '测评'];
+
+const ANNOTATION_COLORS = [
+  { value: '#e53935', label: '红' },
+  { value: '#fb8c00', label: '橙' },
+  { value: '#fdd835', label: '黄' },
+  { value: '#43a047', label: '绿' },
+  { value: '#1e88e5', label: '蓝' },
+  { value: '#8e24aa', label: '紫' },
+  { value: '#ec407a', label: '粉' },
+  { value: '#78909c', label: '灰' }
+];
 
 function renderTagsTab() {
   const content = document.getElementById('ba-tab-content');

@@ -366,6 +366,42 @@ body.ba-push-mode.ba-sidebar-collapsed {
   border-color: #00a1d6;
 }
 
+.ba-color-picker {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.ba-color-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ba-color-dot:hover {
+  transform: scale(1.15);
+}
+
+.ba-color-dot.ba-color-selected {
+  border-color: #333;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 3px #333;
+}
+
+.ba-color-none {
+  background: #f0f0f0;
+  font-size: 10px;
+  color: #999;
+}
+
 .ba-form-actions {
   display: flex;
   gap: 8px;
