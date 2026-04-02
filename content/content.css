@@ -723,7 +723,6 @@ body.ba-push-mode.ba-sidebar-collapsed {
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   cursor: default;
-  title: '侧边栏在全屏模式下不可用';
 }
 
 #bili-annotator-fullscreen-hint.ba-visible {

@@ -785,6 +785,8 @@ function renderSettingsPanel() {
       stopProgressTracking();
       if (settings.features.watchProgress && videoEl) startProgressTracking();
       await saveAndApply();
+    } else {
+      intervalEl.value = settings.progressInterval || 30;
     }
   });
 
@@ -799,6 +801,8 @@ function renderSettingsPanel() {
         else stopProgressTracking();
       }
       await saveAndApply();
+      // Re-render active tab so feature enable/disable takes effect immediately
+      renderActiveTab();
     });
   });
 }
@@ -879,8 +883,7 @@ function startFullscreenObserver() {
 
   // Bilibili full-webpage mode: watch for class changes on body
   const bodyObserver = new MutationObserver(() => {
-    const isFullWin = document.body.classList.contains('player-full-win') ||
-      !!document.querySelector('.player-full-win');
+    const isFullWin = document.body.classList.contains('player-full-win');
     onFullscreenChange(isFullWin || !!document.fullscreenElement);
   });
   bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
