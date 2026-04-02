@@ -58,16 +58,16 @@
   flex-direction: column;
   box-shadow: -2px 0 16px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+}
+
+/* Collapsed state: slide the entire root (toggle + panel) right so the
+   panel goes off-screen while the toggle lands at the viewport edge */
+#bili-annotator-root {
   transition: transform 0.2s ease;
 }
 
-/* Collapsed state */
-#bili-annotator-root.collapsed .ba-panel {
+#bili-annotator-root.collapsed {
   transform: translateX(320px);
-}
-
-#bili-annotator-root.collapsed #bili-annotator-toggle {
-  border-radius: 6px 0 0 6px;
 }
 
 /* Push mode: shift body */
