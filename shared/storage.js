@@ -3,6 +3,7 @@ const BiliStorage = (() => {
 
   const DEFAULT_SETTINGS = {
     sidebarMode: 'overlay',
+    sidebarDefaultOpen: false,
     shortcutKey: 'Alt+A',
     progressInterval: 30,
     features: {

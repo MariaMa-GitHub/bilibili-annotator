@@ -9,7 +9,7 @@ let currentPart = 1;
 let videoEl = null;
 let settings = {};
 let currentRecord = null;
-let sidebarOpen = true;
+let sidebarOpen = false;
 let progressIntervalId = null;
 let isMultiPart = false;
 let showAllParts = false;
@@ -20,6 +20,7 @@ let lastUrl = window.location.href;
 // === INIT ===
 async function init() {
   settings = await BiliStorage.getSettings();
+  sidebarOpen = settings.sidebarDefaultOpen ?? false;
   injectSidebar();
   startNavObserver();
   startFullscreenObserver();
@@ -84,6 +85,12 @@ function injectSidebar() {
   `;
 
   document.body.appendChild(root);
+
+  // Apply initial open/closed state
+  if (!sidebarOpen) {
+    root.classList.add('collapsed');
+    root.querySelector('#bili-annotator-toggle').textContent = '‹';
+  }
 
   // Fullscreen hint icon
   const hint = document.createElement('div');
@@ -687,6 +694,12 @@ function renderSettingsPanel() {
       </div>
 
       <div class="ba-setting-row">
+        <div><div class="ba-setting-label">默认展开侧边栏</div></div>
+        <input class="ba-checkbox" type="checkbox" id="ba-sidebar-default-open"
+          ${settings.sidebarDefaultOpen ? 'checked' : ''}>
+      </div>
+
+      <div class="ba-setting-row">
         <div>
           <div class="ba-setting-label">键盘快捷键</div>
           <div class="ba-setting-desc">快速添加标注</div>
@@ -746,6 +759,12 @@ function renderSettingsPanel() {
       applySidebarMode(settings.sidebarMode);
       await saveAndApply();
     });
+  });
+
+  // Sidebar default open toggle
+  document.getElementById('ba-sidebar-default-open').addEventListener('change', async (e) => {
+    settings.sidebarDefaultOpen = e.target.checked;
+    await saveAndApply();
   });
 
   // Key capture
