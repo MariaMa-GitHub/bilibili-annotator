@@ -594,18 +594,20 @@ function renderRatingTab() {
 
   // Like / dislike
   document.getElementById('ba-btn-like').addEventListener('click', async () => {
+    if (!currentRecord) return;
     currentRecord.rating = currentRecord.rating === 'like' ? null : 'like';
     await BiliStorage.saveVideo(currentBVId, currentRecord);
     renderRatingTab();
   });
   document.getElementById('ba-btn-dislike').addEventListener('click', async () => {
+    if (!currentRecord) return;
     currentRecord.rating = currentRecord.rating === 'dislike' ? null : 'dislike';
     await BiliStorage.saveVideo(currentBVId, currentRecord);
     renderRatingTab();
   });
 
   // Stars
-  const stars = document.querySelectorAll('.ba-star');
+  const stars = content.querySelectorAll('.ba-star');
   stars.forEach(star => {
     star.addEventListener('mouseover', () => {
       const n = parseInt(star.dataset.n);
@@ -615,6 +617,7 @@ function renderRatingTab() {
       stars.forEach(s => s.classList.remove('ba-hover'));
     });
     star.addEventListener('click', async () => {
+      if (!currentRecord) return;
       const n = parseInt(star.dataset.n);
       currentRecord.starRating = currentRecord.starRating === n ? null : n;
       await BiliStorage.saveVideo(currentBVId, currentRecord);
@@ -690,6 +693,7 @@ function startNavObserver() {
     currentPart = extractPartNumber(newUrl);
     showAllParts = false;
     activeTab = 'annotations';
+    ratingMode = 'simple';
 
     // Reset tab UI
     const root = document.getElementById('bili-annotator-root');
