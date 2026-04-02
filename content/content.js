@@ -175,12 +175,96 @@ function renderRatingTab() {
   document.getElementById('ba-tab-content').innerHTML =
     '<p class="ba-empty">评分功能即将实现</p>';
 }
-function renderProgressBar() {}
+function renderProgressBar() {
+  const textEl = document.querySelector('.ba-progress-text');
+  const fillEl = document.querySelector('.ba-progress-bar-fill');
+  if (!textEl || !fillEl) return;
+
+  const wp = currentRecord?.watchProgress;
+  if (!wp || !wp.lastWatchedAt) {
+    textEl.textContent = '暂无观看记录';
+    fillEl.style.width = '0%';
+    return;
+  }
+
+  const date = new Date(wp.lastWatchedAt);
+  const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+
+  let percentStr = '';
+  if (videoEl && videoEl.duration > 0) {
+    const pct = Math.round((wp.lastPosition / videoEl.duration) * 100);
+    percentStr = ` — 已观看${pct}%`;
+    fillEl.style.width = `${pct}%`;
+  } else {
+    fillEl.style.width = '0%';
+  }
+
+  textEl.textContent = `上次观看：${dateStr}${percentStr}`;
+  if (wp.completed) textEl.textContent += ' ✓';
+}
 function renderSettingsPanel() {
   document.getElementById('ba-tab-content').innerHTML =
     '<p class="ba-empty">设置即将实现</p>';
 }
-function startNavObserver() {}
+function startNavObserver() {
+  const titleEl = document.querySelector('head title');
+  if (!titleEl) return;
+
+  const observer = new MutationObserver(() => {
+    const newUrl = window.location.href;
+    if (newUrl === lastUrl) return;
+    lastUrl = newUrl;
+
+    const newBVId = extractBVId(newUrl);
+    if (!newBVId || newBVId === currentBVId) return;
+
+    // Save progress for previous video before switching
+    if (currentBVId && currentRecord) saveProgress();
+
+    // Stop tracking previous video
+    stopProgressTracking();
+
+    currentBVId = newBVId;
+    currentPart = extractPartNumber(newUrl);
+    showAllParts = false;
+    activeTab = 'annotations';
+
+    // Reset tab UI
+    const root = document.getElementById('bili-annotator-root');
+    if (root) {
+      root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
+      const annoTab = root.querySelector('[data-tab="annotations"]');
+      if (annoTab) annoTab.classList.add('ba-active');
+    }
+
+    loadVideo();
+  });
+
+  observer.observe(titleEl, { childList: true });
+
+  // Also handle popstate for back/forward navigation
+  window.addEventListener('popstate', () => {
+    const newUrl = window.location.href;
+    if (newUrl !== lastUrl) {
+      lastUrl = newUrl;
+      const newBVId = extractBVId(newUrl);
+      if (newBVId && newBVId !== currentBVId) {
+        stopProgressTracking();
+        currentBVId = newBVId;
+        currentPart = extractPartNumber(newUrl);
+        showAllParts = false;
+        loadVideo();
+      }
+    }
+  });
+}
+
+function stopProgressTracking() {
+  if (progressIntervalId) {
+    clearInterval(progressIntervalId);
+    progressIntervalId = null;
+  }
+}
 function startFullscreenObserver() {}
 function startShortcutListener() {}
 async function findVideoEl() {}
