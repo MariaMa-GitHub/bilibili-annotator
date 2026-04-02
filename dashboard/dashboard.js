@@ -56,6 +56,11 @@ function renderCard(v) {
   const lastWatched = v.watchProgress?.lastWatchedAt
     ? formatDate(v.watchProgress.lastWatchedAt)
     : '';
+  const wp = v.watchProgress;
+  let progressStr = '';
+  if (wp && wp.duration > 0) {
+    progressStr = `${formatTimestamp(wp.lastPosition)} / ${formatTimestamp(wp.duration)}`;
+  }
 
   const thumb = v.thumbnailUrl
     ? `<img class="db-card-thumb" src="${escapeHtml(v.thumbnailUrl)}" alt="" loading="lazy"
@@ -75,6 +80,7 @@ function renderCard(v) {
             ${ratingStr ? `<span>${ratingStr}</span>` : ''}
             ${annStr ? `<span>${annStr}</span>` : ''}
           </div>
+          ${progressStr ? `<span class="db-card-progress">${progressStr}</span>` : ''}
           <span>${lastWatched}</span>
         </div>
       </div>

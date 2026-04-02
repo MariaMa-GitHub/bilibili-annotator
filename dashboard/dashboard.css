@@ -288,6 +288,12 @@ body {
   gap: 8px;
 }
 
+.db-card-progress {
+  font-size: 10px;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Empty state */
 .db-empty {
   grid-column: 1 / -1;

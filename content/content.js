@@ -662,10 +662,14 @@ function renderProgressBar() {
   const date = new Date(wp.lastWatchedAt);
   const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 
+  const liveDuration = (videoEl && videoEl.duration > 0) ? videoEl.duration : 0;
+  const duration = liveDuration || wp.duration || 0;
   let percentStr = '';
-  if (videoEl && videoEl.duration > 0) {
-    const pct = Math.round((wp.lastPosition / videoEl.duration) * 100);
-    percentStr = ` — 已观看${pct}%`;
+  if (duration > 0) {
+    const pct = Math.round((wp.lastPosition / duration) * 100);
+    const posStr = formatTimestamp(wp.lastPosition);
+    const durStr = formatTimestamp(duration);
+    percentStr = ` — 已观看 ${posStr} / ${durStr} (${pct}%)`;
     fillEl.style.width = `${pct}%`;
   } else {
     fillEl.style.width = '0%';
@@ -987,6 +991,7 @@ async function saveProgress() {
   currentRecord.watchProgress = {
     lastWatchedAt: now,
     lastPosition: Math.floor(videoEl.currentTime),
+    duration: Math.floor(videoEl.duration),
     completed: videoEl.currentTime / videoEl.duration > 0.9
   };
 

@@ -1,5 +1,5 @@
 const BiliStorage = (() => {
-  const RESERVED_KEYS = ['__settings', '__tags'];
+  const RESERVED_KEYS = ['__settings', '__tags', '__collections'];
 
   const DEFAULT_SETTINGS = {
     sidebarMode: 'overlay',
@@ -29,7 +29,7 @@ const BiliStorage = (() => {
       ratingNote: '',
       tags: [],
       annotations: [],
-      watchProgress: { lastWatchedAt: null, lastPosition: 0, completed: false },
+      watchProgress: { lastWatchedAt: null, lastPosition: 0, duration: 0, completed: false },
       createdAt: now,
       updatedAt: now
     };
