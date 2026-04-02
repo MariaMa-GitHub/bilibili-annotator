@@ -269,11 +269,116 @@ function escapeHtml(str) {
 }
 
 // Stubs for next task
-function openAnnotationForm(ann) {
-  document.getElementById('ba-tab-content').innerHTML =
-    '<p class="ba-empty">表单即将实现</p>';
+function openAnnotationForm(existingAnn) {
+  const content = document.getElementById('ba-tab-content');
+  const currentTs = videoEl ? Math.floor(videoEl.currentTime) : 0;
+  const tsStart = existingAnn ? formatTimestamp(existingAnn.timestampStart) : formatTimestamp(currentTs);
+  const tsEnd = existingAnn?.timestampEnd != null ? formatTimestamp(existingAnn.timestampEnd) : '';
+  const label = existingAnn?.label || '';
+  const category = existingAnn?.category || 'note';
+  const partNum = existingAnn?.partNumber || currentPart;
+
+  const partRow = isMultiPart ? `
+    <div class="ba-form-row">
+      <div class="ba-form-field">
+        <label>分P</label>
+        <input class="ba-input" id="ba-form-part" type="number" min="1" value="${partNum}">
+      </div>
+    </div>` : '';
+
+  content.innerHTML = `
+    <div class="ba-form">
+      <div class="ba-form-row">
+        <div class="ba-form-field">
+          <label>时间起点</label>
+          <input class="ba-input" id="ba-form-ts-start" type="text" value="${tsStart}" placeholder="0:00">
+        </div>
+        <div class="ba-form-field">
+          <label>时间终点（选填）</label>
+          <input class="ba-input" id="ba-form-ts-end" type="text" value="${tsEnd}" placeholder="留空为单点">
+        </div>
+      </div>
+      ${partRow}
+      <div class="ba-form-row">
+        <div class="ba-form-field">
+          <label>标注内容 *</label>
+          <input class="ba-input" id="ba-form-label" type="text" value="${escapeHtml(label)}" placeholder="描述这个时间点...">
+        </div>
+      </div>
+      <div class="ba-form-row">
+        <div class="ba-form-field">
+          <label>分类</label>
+          <select class="ba-select" id="ba-form-category">
+            <option value="highlight" ${category === 'highlight' ? 'selected' : ''}>精彩</option>
+            <option value="important" ${category === 'important' ? 'selected' : ''}>重要</option>
+            <option value="funny"     ${category === 'funny'     ? 'selected' : ''}>搞笑</option>
+            <option value="note"      ${category === 'note'      ? 'selected' : ''}>笔记</option>
+            <option value="custom"    ${category === 'custom'    ? 'selected' : ''}>自定义</option>
+          </select>
+        </div>
+      </div>
+      <div class="ba-form-actions">
+        <button class="ba-btn ba-btn-primary" id="ba-form-save">保存</button>
+        <button class="ba-btn ba-btn-secondary" id="ba-form-cancel">取消</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('ba-form-label').focus();
+
+  document.getElementById('ba-form-cancel').addEventListener('click', () => {
+    renderAnnotationsTab();
+  });
+
+  document.getElementById('ba-form-save').addEventListener('click', () => {
+    const labelVal = document.getElementById('ba-form-label').value.trim();
+    if (!labelVal) {
+      document.getElementById('ba-form-label').style.borderColor = '#e53935';
+      return;
+    }
+
+    const tsStartVal = parseTimestamp(document.getElementById('ba-form-ts-start').value);
+    const tsEndRaw = document.getElementById('ba-form-ts-end').value.trim();
+    const tsEndVal = tsEndRaw ? parseTimestamp(tsEndRaw) : null;
+    const catVal = document.getElementById('ba-form-category').value;
+    const partVal = isMultiPart
+      ? parseInt(document.getElementById('ba-form-part').value, 10) || currentPart
+      : currentPart;
+
+    const annData = {
+      id: existingAnn?.id || generateUUID(),
+      partNumber: partVal,
+      timestampStart: tsStartVal,
+      timestampEnd: tsEndVal,
+      label: labelVal,
+      category: catVal
+    };
+
+    saveAnnotation(annData, existingAnn?.id);
+  });
 }
-async function deleteAnnotation(id) {}
+
+async function saveAnnotation(annData, replaceId) {
+  if (!currentRecord) return;
+  if (!currentRecord.annotations) currentRecord.annotations = [];
+
+  if (replaceId) {
+    const idx = currentRecord.annotations.findIndex(a => a.id === replaceId);
+    if (idx !== -1) currentRecord.annotations[idx] = annData;
+    else currentRecord.annotations.push(annData);
+  } else {
+    currentRecord.annotations.push(annData);
+  }
+
+  await BiliStorage.saveVideo(currentBVId, currentRecord);
+  renderAnnotationsTab();
+}
+async function deleteAnnotation(id) {
+  if (!currentRecord) return;
+  currentRecord.annotations = (currentRecord.annotations || []).filter(a => a.id !== id);
+  await BiliStorage.saveVideo(currentBVId, currentRecord);
+  renderAnnotationsTab();
+}
 function renderSummaryTab() {
   document.getElementById('ba-tab-content').innerHTML =
     '<p class="ba-empty">摘要功能即将实现</p>';
@@ -377,7 +482,41 @@ function stopProgressTracking() {
   }
 }
 function startFullscreenObserver() {}
-function startShortcutListener() {}
+function startShortcutListener() {
+  document.addEventListener('keydown', (e) => {
+    const key = settings.shortcutKey || 'Alt+A';
+    if (!matchesShortcut(e, key)) return;
+    e.preventDefault();
+
+    // Switch to annotations tab and open form
+    activeTab = 'annotations';
+    const root = document.getElementById('bili-annotator-root');
+    if (root) {
+      root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
+      root.querySelector('[data-tab="annotations"]')?.classList.add('ba-active');
+    }
+    if (sidebarOpen) {
+      openAnnotationForm(null);
+    } else {
+      toggleSidebar();
+      setTimeout(() => openAnnotationForm(null), 250);
+    }
+  });
+}
+
+function matchesShortcut(event, shortcutStr) {
+  // Parse shortcut strings like "Alt+A", "Ctrl+Shift+N"
+  const parts = shortcutStr.split('+');
+  const key = parts[parts.length - 1].toLowerCase();
+  const needsAlt = parts.includes('Alt');
+  const needsCtrl = parts.includes('Ctrl');
+  const needsShift = parts.includes('Shift');
+
+  return event.key.toLowerCase() === key &&
+    event.altKey === needsAlt &&
+    event.ctrlKey === needsCtrl &&
+    event.shiftKey === needsShift;
+}
 async function findVideoEl() {
   videoEl = document.querySelector('video');
   if (videoEl) return videoEl;
