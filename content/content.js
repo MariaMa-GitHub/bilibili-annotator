@@ -816,7 +816,17 @@ function startNavObserver() {
     lastUrl = newUrl;
 
     const newBVId = extractBVId(newUrl);
-    if (!newBVId || newBVId === currentBVId) return;
+    if (!newBVId) return;
+
+    if (newBVId === currentBVId) {
+      // Same video — check if part changed
+      const newPart = extractPartNumber(newUrl);
+      if (newPart !== currentPart) {
+        currentPart = newPart;
+        renderActiveTab();
+      }
+      return;
+    }
 
     // Save progress for previous video before switching
     if (currentBVId && currentRecord) saveProgress();
@@ -849,13 +859,20 @@ function startNavObserver() {
     if (newUrl !== lastUrl) {
       lastUrl = newUrl;
       const newBVId = extractBVId(newUrl);
-      if (newBVId && newBVId !== currentBVId) {
-        stopProgressTracking();
-        currentBVId = newBVId;
-        currentPart = extractPartNumber(newUrl);
-        showAllParts = false;
-        loadVideo();
+      if (!newBVId) return;
+      if (newBVId === currentBVId) {
+        const newPart = extractPartNumber(newUrl);
+        if (newPart !== currentPart) {
+          currentPart = newPart;
+          renderActiveTab();
+        }
+        return;
       }
+      stopProgressTracking();
+      currentBVId = newBVId;
+      currentPart = extractPartNumber(newUrl);
+      showAllParts = false;
+      loadVideo();
     }
   });
 }
