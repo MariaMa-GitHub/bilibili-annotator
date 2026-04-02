@@ -1,1 +1,731 @@
-/* Stub — implemented in Task 4 */
+/* ============================================================
+   B站注释器 — Sidebar Styles
+   All classes prefixed with `ba-` to avoid Bilibili conflicts
+   ============================================================ */
+
+/* Sidebar container */
+#bili-annotator-root {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+  z-index: 9000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  color: #333;
+  pointer-events: none;
+}
+
+#bili-annotator-root * {
+  box-sizing: border-box;
+}
+
+/* Toggle tab */
+#bili-annotator-toggle {
+  pointer-events: all;
+  width: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+  user-select: none;
+  align-self: center;
+  height: 48px;
+  font-size: 12px;
+  color: #999;
+  transition: background 0.15s;
+}
+
+#bili-annotator-toggle:hover {
+  background: #fff;
+  color: #00a1d6;
+}
+
+/* Sidebar panel */
+.ba-panel {
+  pointer-events: all;
+  width: 320px;
+  background: #fff;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+/* Collapsed state */
+#bili-annotator-root.collapsed .ba-panel {
+  transform: translateX(320px);
+}
+
+#bili-annotator-root.collapsed #bili-annotator-toggle {
+  border-radius: 6px 0 0 6px;
+}
+
+/* Push mode: shift body */
+body.ba-push-mode {
+  margin-right: 320px !important;
+  transition: margin-right 0.2s ease;
+}
+
+body.ba-push-mode.ba-sidebar-collapsed {
+  margin-right: 0 !important;
+}
+
+/* Progress bar area */
+.ba-progress {
+  padding: 8px 14px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 11px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.ba-progress-text {
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ba-progress-bar-track {
+  height: 3px;
+  background: #e8e8e8;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ba-progress-bar-fill {
+  height: 100%;
+  background: #00a1d6;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* Tab bar */
+.ba-tabs {
+  display: flex;
+  border-bottom: 2px solid #f0f0f0;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+
+.ba-tab {
+  flex: 1;
+  padding: 9px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s;
+  user-select: none;
+}
+
+.ba-tab:hover {
+  color: #00a1d6;
+}
+
+.ba-tab.ba-active {
+  color: #00a1d6;
+  border-bottom-color: #00a1d6;
+  font-weight: 600;
+}
+
+/* Tab content area */
+.ba-tab-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px;
+}
+
+.ba-tab-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ba-tab-content::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+
+/* Footer */
+.ba-footer {
+  padding: 8px 14px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.ba-footer-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.ba-footer-btn:hover {
+  color: #00a1d6;
+}
+
+/* ============================================================
+   Annotations Tab
+   ============================================================ */
+
+.ba-annotation-list {
+  margin-bottom: 10px;
+}
+
+.ba-annotation-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid #f4f4f4;
+  gap: 8px;
+}
+
+.ba-annotation-item:last-child {
+  border-bottom: none;
+}
+
+.ba-annotation-ts {
+  font-family: monospace;
+  font-size: 11px;
+  color: #00a1d6;
+  cursor: pointer;
+  min-width: 52px;
+  padding-top: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ba-annotation-ts:hover {
+  text-decoration: underline;
+}
+
+.ba-annotation-ts-range {
+  display: block;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.ba-annotation-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ba-annotation-label {
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+
+.ba-annotation-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ba-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 12px;
+  padding: 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.ba-icon-btn:hover {
+  color: #555;
+}
+
+.ba-part-toggle {
+  font-size: 11px;
+  color: #00a1d6;
+  cursor: pointer;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.ba-part-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 8px;
+  margin-right: 4px;
+}
+
+/* Category badges */
+.ba-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.ba-badge-highlight { background: #fff3e0; color: #e65100; }
+.ba-badge-important { background: #e8f5e9; color: #2e7d32; }
+.ba-badge-funny     { background: #fce4ec; color: #880e4f; }
+.ba-badge-note      { background: #e3f2fd; color: #1565c0; }
+.ba-badge-custom    { background: #f5f5f5; color: #757575; }
+
+/* Add annotation button */
+.ba-add-btn {
+  width: 100%;
+  padding: 8px;
+  background: #00a1d6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ba-add-btn:hover {
+  background: #0091c2;
+}
+
+/* Annotation form */
+.ba-form {
+  background: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.ba-form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ba-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.ba-form-field label {
+  font-size: 11px;
+  color: #888;
+}
+
+.ba-input {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.ba-input:focus {
+  border-color: #00a1d6;
+}
+
+.ba-select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.ba-select:focus {
+  border-color: #00a1d6;
+}
+
+.ba-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ba-btn {
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.ba-btn-primary {
+  background: #00a1d6;
+  color: #fff;
+  border-color: #00a1d6;
+}
+
+.ba-btn-primary:hover {
+  background: #0091c2;
+}
+
+.ba-btn-secondary {
+  background: #fff;
+  color: #666;
+  border-color: #ddd;
+}
+
+.ba-btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.ba-empty {
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ============================================================
+   Summary Tab
+   ============================================================ */
+
+.ba-summary-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.ba-char-counter {
+  font-size: 10px;
+  color: #bbb;
+}
+
+.ba-char-counter.ba-over {
+  color: #e53935;
+}
+
+.ba-textarea {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  background: #fff;
+  line-height: 1.5;
+}
+
+.ba-textarea:focus {
+  border-color: #00a1d6;
+}
+
+.ba-field-group {
+  margin-bottom: 14px;
+}
+
+/* ============================================================
+   Tags Tab
+   ============================================================ */
+
+.ba-tags-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  min-height: 10px;
+}
+
+.ba-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.ba-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1565c0;
+  font-size: 12px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.ba-chip-remove:hover {
+  opacity: 1;
+}
+
+.ba-tag-input-wrap {
+  position: relative;
+}
+
+.ba-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ba-suggestion {
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+}
+
+.ba-suggestion:hover {
+  background: #f0f9ff;
+  color: #00a1d6;
+}
+
+/* ============================================================
+   Rating Tab
+   ============================================================ */
+
+.ba-rating-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ba-mode-btn {
+  flex: 1;
+  padding: 6px;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #888;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ba-mode-btn.ba-active {
+  background: #00a1d6;
+  color: #fff;
+}
+
+.ba-simple-rating {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ba-reaction-btn {
+  flex: 1;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 22px;
+  text-align: center;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.ba-reaction-btn:hover {
+  background: #f0f0f0;
+}
+
+.ba-reaction-btn.ba-selected-like {
+  background: #e8f5e9;
+  border-color: #4caf50;
+}
+
+.ba-reaction-btn.ba-selected-dislike {
+  background: #fce4ec;
+  border-color: #e91e63;
+}
+
+.ba-stars {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 24px;
+}
+
+.ba-star {
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.15s;
+  user-select: none;
+}
+
+.ba-star.ba-filled {
+  color: #ffc107;
+}
+
+.ba-star:hover,
+.ba-star.ba-hover {
+  color: #ffc107;
+}
+
+.ba-rating-note-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   Settings Panel
+   ============================================================ */
+
+.ba-settings {
+  padding: 4px 0;
+}
+
+.ba-settings-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.ba-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f4f4f4;
+}
+
+.ba-setting-label {
+  font-size: 12px;
+  color: #555;
+}
+
+.ba-setting-desc {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.ba-toggle-group {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ba-toggle-opt {
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  background: #fff;
+  border: none;
+  color: #888;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.ba-toggle-opt.ba-active {
+  background: #00a1d6;
+  color: #fff;
+}
+
+.ba-number-input {
+  width: 60px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.ba-key-capture {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: monospace;
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+  color: #333;
+}
+
+.ba-key-capture:focus {
+  border-color: #00a1d6;
+  outline: none;
+}
+
+.ba-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #00a1d6;
+}
+
+/* ============================================================
+   Fullscreen reminder icon
+   ============================================================ */
+
+#bili-annotator-fullscreen-hint {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  z-index: 9999;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: default;
+  title: '侧边栏在全屏模式下不可用';
+}
+
+#bili-annotator-fullscreen-hint.ba-visible {
+  display: flex;
+}
