@@ -1,4 +1,64 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><title>B站注释器</title></head>
-<body><p>Dashboard — coming soon</p></body>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B站注释器 — 视频库</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="db-topbar">
+    <div class="db-brand">B站注释器</div>
+    <input class="db-search" id="db-search" type="text" placeholder="🔍 搜索标题、摘要、标注、标签...">
+    <div class="db-topbar-actions">
+      <button class="db-btn db-btn-primary" id="db-export-btn">导出数据</button>
+      <button class="db-btn db-btn-secondary" id="db-import-btn">导入数据</button>
+      <input type="file" id="db-import-file" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <!-- Filter/sort bar -->
+  <div class="db-filterbar">
+    <span class="db-filter-label">筛选：</span>
+    <div class="db-tag-filter" id="db-tag-filter">
+      <button class="db-filter-btn" id="db-tag-filter-btn">标签 ▾</button>
+      <div class="db-tag-filter-dropdown" id="db-tag-dropdown" style="display:none"></div>
+    </div>
+    <select class="db-select" id="db-rating-filter">
+      <option value="">全部评分</option>
+      <option value="like">已点赞</option>
+      <option value="dislike">已点踩</option>
+      <option value="unrated">未评分</option>
+      <option value="star3">⭐ 3星及以上</option>
+      <option value="star4">⭐ 4星及以上</option>
+      <option value="star5">⭐ 5星</option>
+    </select>
+    <div class="db-spacer"></div>
+    <span class="db-filter-label">排序：</span>
+    <select class="db-select" id="db-sort">
+      <option value="lastWatched">最近观看</option>
+      <option value="createdAt">添加日期</option>
+      <option value="title">标题</option>
+      <option value="annotations">标注数量</option>
+    </select>
+    <span class="db-video-count" id="db-video-count"></span>
+  </div>
+
+  <!-- Import strategy panel (hidden by default) -->
+  <div class="db-import-panel" id="db-import-panel" style="display:none">
+    <span>导入策略：</span>
+    <button class="db-btn db-btn-secondary" id="db-import-skip">跳过已有记录</button>
+    <button class="db-btn db-btn-primary" id="db-import-overwrite">覆盖已有记录</button>
+    <button class="db-btn db-btn-secondary" id="db-import-cancel">取消</button>
+    <span class="db-import-info" id="db-import-info"></span>
+  </div>
+
+  <!-- Main grid -->
+  <div class="db-grid" id="db-grid"></div>
+
+  <script src="../shared/utils.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="dashboard.js"></script>
+</body>
 </html>

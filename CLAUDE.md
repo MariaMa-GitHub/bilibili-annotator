@@ -56,7 +56,7 @@ Read `SPEC.md` for the full technical specification before making any changes.
   - Standard fullscreen: use `document.fullscreenchange` event
   - In both cases, hide the sidebar and show a small 📋 reminder icon.
 - **Z-index**: Bilibili's UI uses z-index values up to ~1000. Use `z-index: 9000` for the sidebar and `z-index: 9999` for the fullscreen reminder icon.
-- **CSS isolation**: Prefix all sidebar CSS classes with `bili-annotator-` to avoid conflicts with Bilibili's own CSS.
+- **CSS isolation**: Sidebar CSS classes use the `ba-` prefix (e.g. `.ba-panel`, `.ba-chip`). IDs use the `bili-annotator-` prefix (e.g. `#bili-annotator-root`, `#bili-annotator-toggle`). Do not mix these conventions.
 
 ---
 
@@ -83,6 +83,35 @@ There is no automated test suite. Test manually by loading the extension as unpa
 - Fullscreen mode: sidebar hides, reminder icon visible
 
 **No console errors** should appear on any Bilibili page, including non-video pages where the sidebar is not active.
+
+---
+
+## Implementation Status
+
+Tasks completed (Tasks 1–17 of 18):
+
+| Task | Status | Commit |
+|---|---|---|
+| 1. Project Scaffold | ✅ Done | `4beaa48` |
+| 2. Shared Utilities (utils.js) | ✅ Done | `eaad016` |
+| 3. Storage Module (storage.js) | ✅ Done | `b038f85` |
+| 4. Sidebar CSS | ✅ Done | `99b81f8` |
+| 5. Sidebar Injection & Chrome | ✅ Done | `cceae9d` |
+| 6. SPA Navigation + Video Record | ✅ Done | `e0032be` |
+| 7. Watch Progress Tracker | ✅ Done | `69117ac` |
+| 8. Annotations Tab (List + Seek) | ✅ Done | `c53782d` |
+| 9. Annotation Form + Keyboard Shortcut | ✅ Done | `8671878` |
+| 10. Summary Tab | ✅ Done | `ae7aad5` |
+| 11. Tags Tab | ✅ Done | `4aa8ee5` |
+| 12. Rating Tab | ✅ Done | `5fee57e` |
+| 13. Settings Panel + Fullscreen Detection | ✅ Done | `f295363` |
+| 14. Background Service Worker | ✅ Done | — |
+| 15. Dashboard HTML + CSS | ✅ Done | — |
+| 16. Dashboard JS — Video Grid | ✅ Done | — |
+| 17. Dashboard JS — Export / Import | ✅ Done | — |
+| 18. End-to-End Verification | ⏳ Pending | — |
+
+Implementation plan: `docs/superpowers/plans/2026-04-01-bilibili-annotator.md`
 
 ---
 
