@@ -8,7 +8,7 @@ A Chrome extension for annotating Bilibili videos. Add timestamped notes, summar
 
 ## Features
 
-- **Annotations** — Add timestamped notes to any point in a video. Click a timestamp to seek directly to it. Categorize annotations (highlight / important / funny / note / custom) and optionally mark them with a color (8 presets, shown as a left-side color bar).
+- **Annotations** — Add timestamped notes to any point in a video. Click a timestamp to seek directly to it. Categorize annotations (highlight / important / funny / note / custom) and optionally mark them with a color (8 presets, shown as a left-side color bar). Deleting shows an inline confirmation (确定 / 取消) to prevent accidental deletion.
 - **Summary** — Write a short and long summary per video. Auto-saves as you type.
 - **Tags** — Tag videos for easy filtering later. Autocomplete from your own tag history and a built-in list of common categories.
 - **Rating** — Like/dislike or 1–5 star rating, plus a free-text rating note.
