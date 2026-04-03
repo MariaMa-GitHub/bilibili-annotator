@@ -338,6 +338,7 @@ function seekTo(seconds) {
 
 function openAnnotationForm(existingAnn) {
   const content = document.getElementById('ba-tab-content');
+  if (!videoEl) videoEl = document.querySelector('video');
   const currentTs = videoEl ? Math.floor(videoEl.currentTime) : 0;
   const tsStart = existingAnn ? formatTimestamp(existingAnn.timestampStart) : formatTimestamp(currentTs);
   const tsEnd = existingAnn?.timestampEnd != null ? formatTimestamp(existingAnn.timestampEnd) : '';
