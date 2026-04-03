@@ -101,6 +101,12 @@ async function loadVideo() {
 
   currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url, ogImage);
 
+  // Patch title if it was stored as the BV ID fallback on a previous visit
+  if (currentRecord.title === currentBVId && title !== currentBVId) {
+    currentRecord.title = title;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  }
+
   // Convert HTTP thumbnail URLs to data URLs so dashboard can load them
   // (Bilibili CDN rejects requests without a bilibili.com referer)
   if (currentRecord.thumbnailUrl && currentRecord.thumbnailUrl.startsWith('http')) {
@@ -442,6 +448,12 @@ function openAnnotationForm(existingAnn) {
     const tsStartVal = parseTimestamp(document.getElementById('ba-form-ts-start').value);
     const tsEndRaw = document.getElementById('ba-form-ts-end').value.trim();
     const tsEndVal = tsEndRaw ? parseTimestamp(tsEndRaw) : null;
+
+    if (tsEndVal !== null && tsEndVal <= tsStartVal) {
+      document.getElementById('ba-form-ts-end').style.borderColor = '#e53935';
+      return;
+    }
+
     const catVal = document.getElementById('ba-form-category').value;
     const partVal = isMultiPart
       ? parseInt(document.getElementById('ba-form-part').value, 10) || currentPart

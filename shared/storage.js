@@ -8,7 +8,6 @@ const BiliStorage = (() => {
     progressInterval: 30,
     features: {
       watchProgress: true,
-      annotations: true,
       summary: true,
       tags: true,
       rating: true
