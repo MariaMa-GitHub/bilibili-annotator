@@ -105,7 +105,7 @@ function renderCard(v) {
     </div>` : '';
 
   return `
-    <a class="db-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener" title="${escapeHtml(v.title)}">
+    <a class="db-card" href="${/^https?:\/\//.test(v.url || '') ? escapeHtml(v.url) : '#'}" target="_blank" rel="noopener" title="${escapeHtml(v.title)}">
       <div class="db-card-title">${escapeHtml(v.title)}</div>
       ${(tags.length > 0 || moreCount > 0) ? `<div class="db-card-tags">${tagChips}${moreTags}</div>` : ''}
       ${progressRow}

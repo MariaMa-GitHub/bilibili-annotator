@@ -75,3 +75,15 @@ function sanitizeColor(color) {
   if (!color) return null;
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : null;
 }
+
+function matchesShortcut(event, shortcutStr) {
+  const parts = shortcutStr.split('+');
+  const key = parts[parts.length - 1].toLowerCase();
+  const needsAlt = parts.includes('Alt');
+  const needsCtrl = parts.includes('Ctrl');
+  const needsShift = parts.includes('Shift');
+  return event.key.toLowerCase() === key &&
+    event.altKey === needsAlt &&
+    event.ctrlKey === needsCtrl &&
+    event.shiftKey === needsShift;
+}

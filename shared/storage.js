@@ -114,6 +114,10 @@ const BiliStorage = (() => {
     if (typeof val.title !== 'string') return false;
     if ('annotations' in val && !Array.isArray(val.annotations)) return false;
     if ('tags' in val && !Array.isArray(val.tags)) return false;
+    if (val.url != null) {
+      if (typeof val.url !== 'string') return false;
+      if (val.url && !/^https?:\/\//.test(val.url)) return false;
+    }
     return true;
   }
 
@@ -131,7 +135,10 @@ const BiliStorage = (() => {
 
     if (data.__tags) {
       const currentTags = current.__tags || [];
-      toWrite.__tags = [...new Set([...currentTags, ...data.__tags])];
+      const importedTags = Array.isArray(data.__tags)
+        ? data.__tags.filter(t => typeof t === 'string')
+        : [];
+      toWrite.__tags = [...new Set([...currentTags, ...importedTags])];
     }
 
     await chrome.storage.local.set(toWrite);

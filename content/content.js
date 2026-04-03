@@ -776,8 +776,8 @@ function renderProgressBar() {
     fillEl.style.width = '0%';
   }
 
-  textEl.innerHTML = `<span class="ba-progress-primary">${primary}</span>${
-    secondary ? `<span class="ba-progress-secondary">${secondary}</span>` : ''
+  textEl.innerHTML = `<span class="ba-progress-primary">${escapeHtml(primary)}</span>${
+    secondary ? `<span class="ba-progress-secondary">${escapeHtml(secondary)}</span>` : ''
   }`;
 }
 function renderSettingsPanel() {
@@ -811,7 +811,7 @@ function renderSettingsPanel() {
           <div class="ba-setting-desc">快速添加标注</div>
         </div>
         <div class="ba-key-capture" id="ba-key-capture" tabindex="0">
-          ${settings.shortcutKey || 'Alt+A'}
+          ${escapeHtml(settings.shortcutKey || 'Alt+A')}
         </div>
       </div>
 
@@ -1087,19 +1087,7 @@ function startShortcutListener() {
   });
 }
 
-function matchesShortcut(event, shortcutStr) {
-  // Parse shortcut strings like "Alt+A", "Ctrl+Shift+N"
-  const parts = shortcutStr.split('+');
-  const key = parts[parts.length - 1].toLowerCase();
-  const needsAlt = parts.includes('Alt');
-  const needsCtrl = parts.includes('Ctrl');
-  const needsShift = parts.includes('Shift');
 
-  return event.key.toLowerCase() === key &&
-    event.altKey === needsAlt &&
-    event.ctrlKey === needsCtrl &&
-    event.shiftKey === needsShift;
-}
 async function findVideoEl() {
   videoEl = document.querySelector('video');
   if (videoEl) return videoEl;

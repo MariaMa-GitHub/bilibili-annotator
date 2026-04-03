@@ -61,5 +61,62 @@ assert(typeof uuid === 'string' && uuid.length === 36, 'returns 36-char string')
 assert(/^[0-9a-f-]+$/.test(uuid), 'only hex and dashes');
 assert(generateUUID() !== generateUUID(), 'generates unique values');
 
-console.log(`\n${passed} passed, ${failed} failed`);
-if (failed > 0) process.exit(1);
+// escapeHtml
+console.log('\nescapeHtml:');
+assert(escapeHtml('&') === '&amp;', 'escapes &');
+assert(escapeHtml('<') === '&lt;', 'escapes <');
+assert(escapeHtml('>') === '&gt;', 'escapes >');
+assert(escapeHtml('"') === '&quot;', 'escapes "');
+assert(escapeHtml("'") === '&#39;', "escapes '");
+assert(escapeHtml('<script>alert(1)</script>') === '&lt;script&gt;alert(1)&lt;/script&gt;', 'escapes full XSS payload');
+assert(escapeHtml('') === '', 'empty string unchanged');
+assert(escapeHtml(null) === '', 'null returns empty string');
+assert(escapeHtml(undefined) === '', 'undefined returns empty string');
+assert(escapeHtml(42) === '42', 'number coerced to string');
+assert(escapeHtml('safe text') === 'safe text', 'safe text unchanged');
+
+// sanitizeColor
+console.log('\nsanitizeColor:');
+assert(sanitizeColor('#e53935') === '#e53935', 'valid lowercase hex accepted');
+assert(sanitizeColor('#FFFFFF') === '#FFFFFF', 'valid uppercase hex accepted');
+assert(sanitizeColor('#1aB2c3') === '#1aB2c3', 'mixed-case hex accepted');
+assert(sanitizeColor('#000000') === '#000000', 'black accepted');
+assert(sanitizeColor(null) === null, 'null returns null');
+assert(sanitizeColor(undefined) === null, 'undefined returns null');
+assert(sanitizeColor('') === null, 'empty string returns null');
+assert(sanitizeColor('red') === null, 'named color rejected');
+assert(sanitizeColor('#fff') === null, 'shorthand 3-digit hex rejected');
+assert(sanitizeColor('#gggggg') === null, 'invalid hex chars rejected');
+assert(sanitizeColor('javascript:alert(1)') === null, 'javascript: scheme rejected');
+
+// debounce
+console.log('\ndebounce:');
+(async () => {
+  let callCount = 0;
+  const debounced = debounce(() => callCount++, 20);
+  debounced(); debounced(); debounced();
+  await new Promise(r => setTimeout(r, 50));
+  assert(callCount === 1, 'debounce: rapid calls collapsed to one invocation');
+
+  let lastArg = null;
+  const debouncedArg = debounce((x) => { lastArg = x; }, 20);
+  debouncedArg('first'); debouncedArg('last');
+  await new Promise(r => setTimeout(r, 50));
+  assert(lastArg === 'last', 'debounce: last call wins');
+})().then(() => {
+  // matchesShortcut — written before moving function to utils.js (TDD RED)
+  console.log('\nmatchesShortcut:');
+  const makeEvent = (key, { alt = false, ctrl = false, shift = false } = {}) =>
+    ({ key, altKey: alt, ctrlKey: ctrl, shiftKey: shift });
+
+  assert(matchesShortcut(makeEvent('a', { alt: true }), 'Alt+A') === true, 'Alt+A matches');
+  assert(matchesShortcut(makeEvent('a', { alt: false }), 'Alt+A') === false, 'Alt+A needs alt key');
+  assert(matchesShortcut(makeEvent('A', { alt: true }), 'Alt+A') === true, 'case-insensitive key match');
+  assert(matchesShortcut(makeEvent('k', { ctrl: true }), 'Ctrl+K') === true, 'Ctrl+K matches');
+  assert(matchesShortcut(makeEvent('n', { ctrl: true, shift: true }), 'Ctrl+Shift+N') === true, 'Ctrl+Shift+N matches');
+  assert(matchesShortcut(makeEvent('n', { ctrl: true }), 'Ctrl+Shift+N') === false, 'Ctrl+Shift+N needs shift');
+  assert(matchesShortcut(makeEvent('a', {}), 'Alt+A') === false, 'no modifiers does not match Alt+A');
+
+  console.log(`\n${passed} passed, ${failed} failed`);
+  if (failed > 0) process.exit(1);
+});
