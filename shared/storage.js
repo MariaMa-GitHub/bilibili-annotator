@@ -108,6 +108,15 @@ const BiliStorage = (() => {
     return await chrome.storage.local.get(null);
   }
 
+  function isValidRecord(val) {
+    if (!val || typeof val !== 'object') return false;
+    if (typeof val.videoId !== 'string' || !val.videoId) return false;
+    if (typeof val.title !== 'string') return false;
+    if ('annotations' in val && !Array.isArray(val.annotations)) return false;
+    if ('tags' in val && !Array.isArray(val.tags)) return false;
+    return true;
+  }
+
   async function importAll(data, strategy) {
     const current = await chrome.storage.local.get(null);
     const toWrite = {};
@@ -115,6 +124,7 @@ const BiliStorage = (() => {
     for (const [key, val] of Object.entries(data)) {
       if (key === '__settings') continue;
       if (key === '__tags') continue;
+      if (!isValidRecord(val)) continue;
       if (strategy === 'skip' && key in current) continue;
       toWrite[key] = val;
     }

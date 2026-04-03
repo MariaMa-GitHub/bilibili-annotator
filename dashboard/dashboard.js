@@ -129,14 +129,6 @@ function formatDate(isoStr) {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // === FILTER AND SORT ===
 function hasAnnotationData(v) {
   if ((v.annotations || []).length > 0) return true;

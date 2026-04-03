@@ -61,3 +61,17 @@ function tokenize(text) {
     .split(/[\s\u3000-\u303f\uff00-\uffef\u2000-\u206f,，。！？；：、·]+/)
     .filter(t => t.length > 0);
 }
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeColor(color) {
+  if (!color) return null;
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : null;
+}

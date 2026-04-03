@@ -38,6 +38,7 @@ async function init() {
 
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'toggleSidebar') toggleSidebar();
+    if (msg.type === 'quickAnnotate') triggerQuickAnnotate();
   });
 }
 
@@ -231,7 +232,7 @@ function renderActiveTab() {
   }
 }
 
-// === PLACEHOLDERS (implemented in later tasks) ===
+// === ANNOTATIONS TAB ===
 function renderAnnotationsTab() {
   const content = document.getElementById('ba-tab-content');
   const annotations = currentRecord?.annotations || [];
@@ -273,7 +274,8 @@ function renderAnnotationsTab() {
         ? `<span class="ba-part-badge">P${ann.partNumber || 1}</span>`
         : '';
 
-      const colorStyle = ann.color ? `border-left: 3px solid ${ann.color}; padding-left: 5px;` : '';
+      const safeColor = sanitizeColor(ann.color);
+      const colorStyle = safeColor ? `border-left: 3px solid ${safeColor}; padding-left: 5px;` : '';
       html += `
         <div class="ba-annotation-item" data-id="${ann.id}" style="${colorStyle}">
           <div class="ba-annotation-ts" data-ts="${ann.timestampStart}">
@@ -334,15 +336,6 @@ function seekTo(seconds) {
   if (videoEl) videoEl.currentTime = seconds;
 }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// Stubs for next task
 function openAnnotationForm(existingAnn) {
   const content = document.getElementById('ba-tab-content');
   const currentTs = videoEl ? Math.floor(videoEl.currentTime) : 0;
@@ -1069,25 +1062,27 @@ function startFullscreenObserver() {
   });
   bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
+function triggerQuickAnnotate() {
+  activeTab = 'annotations';
+  const root = document.getElementById('bili-annotator-root');
+  if (root) {
+    root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
+    root.querySelector('[data-tab="annotations"]')?.classList.add('ba-active');
+  }
+  if (sidebarOpen) {
+    openAnnotationForm(null);
+  } else {
+    toggleSidebar();
+    setTimeout(() => openAnnotationForm(null), 250);
+  }
+}
+
 function startShortcutListener() {
   document.addEventListener('keydown', (e) => {
     const key = settings.shortcutKey || 'Alt+A';
     if (!matchesShortcut(e, key)) return;
     e.preventDefault();
-
-    // Switch to annotations tab and open form
-    activeTab = 'annotations';
-    const root = document.getElementById('bili-annotator-root');
-    if (root) {
-      root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
-      root.querySelector('[data-tab="annotations"]')?.classList.add('ba-active');
-    }
-    if (sidebarOpen) {
-      openAnnotationForm(null);
-    } else {
-      toggleSidebar();
-      setTimeout(() => openAnnotationForm(null), 250);
-    }
+    triggerQuickAnnotate();
   });
 }
 
