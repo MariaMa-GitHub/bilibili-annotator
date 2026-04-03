@@ -233,6 +233,28 @@ function renderActiveTab() {
 }
 
 // === ANNOTATIONS TAB ===
+function attachAnnotationActions(actionsEl, id) {
+  actionsEl.querySelector('.ba-edit-btn').addEventListener('click', () => {
+    const ann = (currentRecord?.annotations || []).find(a => a.id === id);
+    if (ann) openAnnotationForm(ann);
+  });
+  actionsEl.querySelector('.ba-delete-btn').addEventListener('click', () => {
+    actionsEl.innerHTML = `
+      <span class="ba-delete-confirm-label">确定删除？</span>
+      <button class="ba-icon-btn ba-confirm-yes-btn">确定</button>
+      <button class="ba-icon-btn ba-cancel-delete-btn">取消</button>`;
+    actionsEl.querySelector('.ba-confirm-yes-btn').addEventListener('click', () => {
+      deleteAnnotation(id);
+    });
+    actionsEl.querySelector('.ba-cancel-delete-btn').addEventListener('click', () => {
+      actionsEl.innerHTML = `
+        <button class="ba-icon-btn ba-edit-btn" data-id="${id}" title="编辑">✏️</button>
+        <button class="ba-icon-btn ba-delete-btn" data-id="${id}" title="删除">🗑</button>`;
+      attachAnnotationActions(actionsEl, id);
+    });
+  });
+}
+
 function renderAnnotationsTab() {
   const content = document.getElementById('ba-tab-content');
   const annotations = currentRecord?.annotations || [];
@@ -312,17 +334,9 @@ function renderAnnotationsTab() {
     });
   });
 
-  // Event: edit button
-  content.querySelectorAll('.ba-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const ann = (currentRecord?.annotations || []).find(a => a.id === btn.dataset.id);
-      if (ann) openAnnotationForm(ann);
-    });
-  });
-
-  // Event: delete button
-  content.querySelectorAll('.ba-delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteAnnotation(btn.dataset.id));
+  // Event: edit + delete buttons (with inline delete confirmation)
+  content.querySelectorAll('.ba-annotation-item').forEach(item => {
+    attachAnnotationActions(item.querySelector('.ba-annotation-actions'), item.dataset.id);
   });
 
   // Event: add button

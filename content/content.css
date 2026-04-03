@@ -270,6 +270,13 @@ body.ba-push-mode.ba-sidebar-collapsed {
   color: #555;
 }
 
+.ba-delete-confirm-label {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  align-self: center;
+}
+
 .ba-part-toggle {
   font-size: 11px;
   color: #00a1d6;
