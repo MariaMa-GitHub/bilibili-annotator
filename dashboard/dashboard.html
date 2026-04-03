@@ -25,11 +25,12 @@
       <button class="db-filter-btn" id="db-tag-filter-btn">标签 ▾</button>
       <div class="db-tag-filter-dropdown" id="db-tag-dropdown" style="display:none"></div>
     </div>
+    <div class="db-toggle-group">
+      <button class="db-toggle-btn" id="db-like-filter" data-value="like" title="已点赞">👍</button>
+      <button class="db-toggle-btn" id="db-dislike-filter" data-value="dislike" title="已点踩">👎</button>
+    </div>
     <select class="db-select" id="db-rating-filter">
       <option value="">全部评分</option>
-      <option value="like">已点赞</option>
-      <option value="dislike">已点踩</option>
-      <option value="unrated">未评分</option>
       <option value="star3">⭐ 3星及以上</option>
       <option value="star4">⭐ 4星及以上</option>
       <option value="star5">⭐ 5星</option>
@@ -39,8 +40,8 @@
     <select class="db-select" id="db-sort">
       <option value="lastWatched">最近观看</option>
       <option value="createdAt">添加日期</option>
-      <option value="title">标题</option>
       <option value="annotations">标注数量</option>
+      <option value="rating">评分</option>
     </select>
     <span class="db-video-count" id="db-video-count"></span>
   </div>
@@ -54,8 +55,15 @@
     <span class="db-import-info" id="db-import-info"></span>
   </div>
 
-  <!-- Main grid -->
+  <!-- Main list -->
   <div class="db-grid" id="db-grid"></div>
+
+  <!-- Pagination -->
+  <div class="db-pagination" id="db-pagination" style="display:none">
+    <button class="db-btn db-btn-secondary" id="db-page-prev" disabled>上一页</button>
+    <span class="db-page-info" id="db-page-info"></span>
+    <button class="db-btn db-btn-secondary" id="db-page-next">下一页</button>
+  </div>
 
   <script src="../shared/utils.js"></script>
   <script src="../shared/storage.js"></script>

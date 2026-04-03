@@ -7,9 +7,12 @@ let allVideos = {};
 let allTags = [];
 let searchQuery = '';
 let selectedTags = [];
-let ratingFilter = '';
+let likeFilter = '';   // '' | 'like' | 'dislike'
+let ratingFilter = ''; // '' | 'star3' | 'star4' | 'star5'
 let sortBy = 'lastWatched';
 let importPendingData = null;
+let currentPage = 1;
+const ITEMS_PER_PAGE = 20;
 
 // === INIT ===
 async function init() {
@@ -22,21 +25,46 @@ async function init() {
 
 // === RENDER GRID ===
 function renderGrid() {
-  const videos = filterAndSort(Object.values(allVideos));
+  const allFiltered = filterAndSort(Object.values(allVideos));
+  const totalPages = Math.max(1, Math.ceil(allFiltered.length / ITEMS_PER_PAGE));
+
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
   const grid = document.getElementById('db-grid');
   const countEl = document.getElementById('db-video-count');
-  countEl.textContent = `共 ${videos.length} 个视频`;
+  countEl.textContent = `共 ${allFiltered.length} 个视频`;
 
-  if (videos.length === 0) {
+  if (allFiltered.length === 0) {
     grid.innerHTML = `
       <div class="db-empty">
-        <div>暂无视频记录</div>
-        <div class="db-empty-sub">在Bilibili视频页面使用侧边栏添加标注后，视频将出现在这里</div>
+        <div>暂无标注视频</div>
+        <div class="db-empty-sub">在Bilibili视频页面添加标注、摘要或评分后，视频将出现在这里</div>
       </div>`;
+  } else {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const pageVideos = allFiltered.slice(start, start + ITEMS_PER_PAGE);
+    grid.innerHTML = pageVideos.map(v => renderCard(v)).join('');
+  }
+
+  renderPagination(allFiltered.length, totalPages);
+}
+
+function renderPagination(total, totalPages) {
+  const paginationEl = document.getElementById('db-pagination');
+  const info = document.getElementById('db-page-info');
+  const prevBtn = document.getElementById('db-page-prev');
+  const nextBtn = document.getElementById('db-page-next');
+
+  if (totalPages <= 1) {
+    paginationEl.style.display = 'none';
     return;
   }
 
-  grid.innerHTML = videos.map(v => renderCard(v)).join('');
+  paginationEl.style.display = 'flex';
+  info.textContent = `第 ${currentPage} / ${totalPages} 页`;
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
 }
 
 function renderCard(v) {
@@ -56,33 +84,37 @@ function renderCard(v) {
   const lastWatched = v.watchProgress?.lastWatchedAt
     ? formatDate(v.watchProgress.lastWatchedAt)
     : '';
+
   const wp = v.watchProgress;
-  let progressStr = '';
-  if (wp && wp.duration > 0) {
-    progressStr = `${formatTimestamp(wp.lastPosition)} / ${formatTimestamp(wp.duration)}`;
+  let progressTimestamp = '';
+  let progressPct = 0;
+  if (wp) {
+    const useGlobal = (wp.partCount > 1) && (wp.totalDuration > 0);
+    const displayPos = useGlobal ? (wp.globalPosition ?? 0) : (wp.lastPosition ?? 0);
+    const displayDur = useGlobal ? wp.totalDuration : (wp.duration || 0);
+    if (displayDur > 0) {
+      progressTimestamp = `${formatTimestamp(displayPos)} / ${formatTimestamp(displayDur)}`;
+      progressPct = Math.min(100, Math.round((displayPos / displayDur) * 100));
+    }
   }
 
-  const thumb = v.thumbnailUrl
-    ? `<img class="db-card-thumb" src="${escapeHtml(v.thumbnailUrl)}" alt="" loading="lazy"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-    : '';
-  const placeholder = `<div class="db-card-thumb-placeholder" ${v.thumbnailUrl ? 'style="display:none"' : ''}>🎬</div>`;
+  const progressRow = progressTimestamp ? `
+    <div class="db-card-progress-row">
+      <div class="db-card-progress-bar"><div class="db-card-progress-fill" style="width:${progressPct}%"></div></div>
+      <span class="db-card-progress">${progressPct}% · ${progressTimestamp}</span>
+    </div>` : '';
 
   return `
     <a class="db-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener" title="${escapeHtml(v.title)}">
-      ${thumb}${placeholder}
-      <div class="db-card-body">
-        <div class="db-card-title">${escapeHtml(v.title)}</div>
-        ${v.summaryShort ? `<div class="db-card-summary">${escapeHtml(v.summaryShort)}</div>` : ''}
-        <div class="db-card-tags">${tagChips}${moreTags}</div>
-        <div class="db-card-meta">
-          <div class="db-card-stats">
-            ${ratingStr ? `<span>${ratingStr}</span>` : ''}
-            ${annStr ? `<span>${annStr}</span>` : ''}
-          </div>
-          ${progressStr ? `<span class="db-card-progress">${progressStr}</span>` : ''}
-          <span>${lastWatched}</span>
+      <div class="db-card-title">${escapeHtml(v.title)}</div>
+      ${(tags.length > 0 || moreCount > 0) ? `<div class="db-card-tags">${tagChips}${moreTags}</div>` : ''}
+      ${progressRow}
+      <div class="db-card-meta">
+        <div class="db-card-stats">
+          ${ratingStr ? `<span>${ratingStr}</span>` : ''}
+          ${annStr ? `<span>${annStr}</span>` : ''}
         </div>
+        ${lastWatched ? `<span class="db-card-date">${lastWatched}</span>` : ''}
       </div>
     </a>`;
 }
@@ -90,6 +122,10 @@ function renderCard(v) {
 function formatDate(isoStr) {
   if (!isoStr) return '';
   const d = new Date(isoStr);
+  const now = new Date();
+  if (d.getFullYear() !== now.getFullYear()) {
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+  }
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
@@ -102,8 +138,23 @@ function escapeHtml(str) {
 }
 
 // === FILTER AND SORT ===
+function hasAnnotationData(v) {
+  if ((v.annotations || []).length > 0) return true;
+  if (v.summaryShort || v.summaryLong) return true;
+  if (v.rating === 'like' || v.rating === 'dislike') return true;
+  if (v.starRating) return true;
+  return false;
+}
+
+function ratingScore(v) {
+  if (v.starRating) return v.starRating;
+  if (v.rating === 'like') return 0.5;
+  if (v.rating === 'dislike') return -1;
+  return 0;
+}
+
 function filterAndSort(videos) {
-  let result = videos;
+  let result = videos.filter(hasAnnotationData);
 
   // Search filter
   if (searchQuery.trim()) {
@@ -132,12 +183,14 @@ function filterAndSort(videos) {
     );
   }
 
-  // Rating filter
+  // Like/dislike filter
+  if (likeFilter) {
+    result = result.filter(v => v.rating === likeFilter);
+  }
+
+  // Star rating filter
   if (ratingFilter) {
     result = result.filter(v => {
-      if (ratingFilter === 'like') return v.rating === 'like';
-      if (ratingFilter === 'dislike') return v.rating === 'dislike';
-      if (ratingFilter === 'unrated') return !v.rating && !v.starRating;
       if (ratingFilter === 'star3') return (v.starRating || 0) >= 3;
       if (ratingFilter === 'star4') return (v.starRating || 0) >= 4;
       if (ratingFilter === 'star5') return v.starRating === 5;
@@ -145,17 +198,22 @@ function filterAndSort(videos) {
     });
   }
 
-  // Sort
+  // Sort with title tie-breaking
   result.sort((a, b) => {
+    let cmp = 0;
     if (sortBy === 'lastWatched') {
       const aTs = a.watchProgress?.lastWatchedAt || a.updatedAt || '';
       const bTs = b.watchProgress?.lastWatchedAt || b.updatedAt || '';
-      return bTs.localeCompare(aTs);
+      cmp = bTs.localeCompare(aTs);
+    } else if (sortBy === 'createdAt') {
+      cmp = (b.createdAt || '').localeCompare(a.createdAt || '');
+    } else if (sortBy === 'annotations') {
+      cmp = (b.annotations || []).length - (a.annotations || []).length;
+    } else if (sortBy === 'rating') {
+      cmp = ratingScore(b) - ratingScore(a);
     }
-    if (sortBy === 'createdAt') return (b.createdAt || '').localeCompare(a.createdAt || '');
-    if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '', 'zh');
-    if (sortBy === 'annotations') return (b.annotations || []).length - (a.annotations || []).length;
-    return 0;
+    if (cmp === 0) cmp = (a.title || '').localeCompare(b.title || '', 'zh');
+    return cmp;
   });
 
   return result;
@@ -183,6 +241,7 @@ function renderTagFilterOptions() {
       }
       el.classList.toggle('selected', selectedTags.includes(tag));
       document.getElementById('db-tag-filter-btn').classList.toggle('active', selectedTags.length > 0);
+      currentPage = 1;
       renderGrid();
     });
   });
@@ -194,6 +253,7 @@ function bindEvents() {
   const searchEl = document.getElementById('db-search');
   searchEl.addEventListener('input', debounce(() => {
     searchQuery = searchEl.value;
+    currentPage = 1;
     renderGrid();
   }, 200));
 
@@ -207,15 +267,39 @@ function bindEvents() {
   });
   document.addEventListener('click', () => { tagDropdown.style.display = 'none'; });
 
-  // Rating filter
+  // Like/dislike toggle buttons
+  document.querySelectorAll('.db-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.value;
+      likeFilter = likeFilter === value ? '' : value;
+      document.querySelectorAll('.db-toggle-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.value === likeFilter)
+      );
+      currentPage = 1;
+      renderGrid();
+    });
+  });
+
+  // Star rating filter
   document.getElementById('db-rating-filter').addEventListener('change', (e) => {
     ratingFilter = e.target.value;
+    currentPage = 1;
     renderGrid();
   });
 
   // Sort
   document.getElementById('db-sort').addEventListener('change', (e) => {
     sortBy = e.target.value;
+    currentPage = 1;
+    renderGrid();
+  });
+
+  // Pagination
+  document.getElementById('db-page-prev').addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; renderGrid(); }
+  });
+  document.getElementById('db-page-next').addEventListener('click', () => {
+    currentPage++;
     renderGrid();
   });
 
