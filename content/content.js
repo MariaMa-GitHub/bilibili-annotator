@@ -16,6 +16,9 @@ let showAllParts = false;
 let activeTab = 'annotations';
 let ratingMode = 'simple'; // 'simple' or 'detailed'
 let lastUrl = window.location.href;
+let tagDismissHandler = null;
+let trackingHandlers = null;  // { videoEl, pause, ended, seeked, visibility }
+let seekSaveTimer = null;
 
 // === INIT ===
 async function init() {
@@ -38,47 +41,77 @@ async function init() {
   });
 }
 
-async function captureThumbnailAsDataUrl(url) {
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    const bitmapUrl = URL.createObjectURL(blob);
-    const img = new Image();
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = bitmapUrl;
-    });
-    const MAX_W = 320, MAX_H = 180;
-    let w = img.width, h = img.height;
-    if (w > MAX_W || h > MAX_H) {
-      const ratio = Math.min(MAX_W / w, MAX_H / h);
-      w = Math.round(w * ratio);
-      h = Math.round(h * ratio);
-    }
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    URL.revokeObjectURL(bitmapUrl);
-    return canvas.toDataURL('image/jpeg', 0.7);
-  } catch (e) {
-    return null;
+function renderToDataUrl(img, maxW, maxH, quality) {
+  let w = img.width, h = img.height;
+  if (w > maxW || h > maxH) {
+    const ratio = Math.min(maxW / w, maxH / h);
+    w = Math.round(w * ratio);
+    h = Math.round(h * ratio);
   }
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+async function captureThumbnailAsDataUrl(urls) {
+  for (const url of urls) {
+    if (!url || !url.startsWith('http')) continue;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 1000));
+        const resp = await fetch(url);
+        if (!resp.ok) break; // this URL is bad, try next source
+        const blob = await resp.blob();
+        const bitmapUrl = URL.createObjectURL(blob);
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = bitmapUrl;
+        });
+        let dataUrl = renderToDataUrl(img, 320, 180, 0.7);
+        if (dataUrl.length > 100_000) dataUrl = renderToDataUrl(img, 320, 180, 0.4);
+        if (dataUrl.length > 100_000) dataUrl = renderToDataUrl(img, 240, 135, 0.4);
+        URL.revokeObjectURL(bitmapUrl);
+        return dataUrl;
+      } catch {
+        // network or decode error — retry or try next source
+      }
+    }
+  }
+  console.warn('[bili-annotator] Thumbnail capture failed for all sources');
+  return null;
 }
 
 async function loadVideo() {
   const title = document.querySelector('h1')?.textContent?.trim() || currentBVId;
   const url = window.location.href;
-  const thumbnailUrl = document.querySelector('meta[property="og:image"]')?.content || null;
 
-  currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url, thumbnailUrl);
+  // Gather thumbnail candidates in priority order
+  const ogImage = document.querySelector('meta[property="og:image"]')?.content || null;
+  const stateImage = (() => {
+    const pic = window.__INITIAL_STATE__?.videoData?.pic;
+    return pic ? (pic.startsWith('http') ? pic : 'https:' + pic) : null;
+  })();
+  const posterImage = document.querySelector('video')?.poster || null;
+  const thumbCandidates = [ogImage, stateImage, posterImage].filter(Boolean);
+
+  currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url, ogImage);
 
   // Convert HTTP thumbnail URLs to data URLs so dashboard can load them
   // (Bilibili CDN rejects requests without a bilibili.com referer)
   if (currentRecord.thumbnailUrl && currentRecord.thumbnailUrl.startsWith('http')) {
-    const dataUrl = await captureThumbnailAsDataUrl(currentRecord.thumbnailUrl);
+    const dataUrl = await captureThumbnailAsDataUrl(
+      [currentRecord.thumbnailUrl, ...thumbCandidates]
+    );
+    // On failure, null out the HTTP URL so the dashboard shows a clean placeholder
+    currentRecord.thumbnailUrl = dataUrl;
+    await BiliStorage.saveVideo(currentBVId, currentRecord);
+  } else if (!currentRecord.thumbnailUrl && thumbCandidates.length > 0) {
+    // No thumbnail yet (record predates capture code, or first capture failed)
+    const dataUrl = await captureThumbnailAsDataUrl(thumbCandidates);
     if (dataUrl) {
       currentRecord.thumbnailUrl = dataUrl;
       await BiliStorage.saveVideo(currentBVId, currentRecord);
@@ -131,13 +164,6 @@ function injectSidebar() {
     root.classList.add('collapsed');
     root.querySelector('#bili-annotator-toggle').textContent = '‹';
   }
-
-  // Fullscreen hint icon
-  const hint = document.createElement('div');
-  hint.id = 'bili-annotator-fullscreen-hint';
-  hint.title = '侧边栏在全屏模式下不可用';
-  hint.textContent = '📋';
-  document.body.appendChild(hint);
 
   // Event: toggle button
   document.getElementById('bili-annotator-toggle').addEventListener('click', toggleSidebar);
@@ -596,9 +622,11 @@ function renderTagsTab() {
     }
   });
 
-  document.addEventListener('click', (e) => {
+  if (tagDismissHandler) document.removeEventListener('click', tagDismissHandler);
+  tagDismissHandler = (e) => {
     if (!content.contains(e.target)) suggestionsEl.style.display = 'none';
-  }, { once: true });
+  };
+  document.addEventListener('click', tagDismissHandler);
 }
 
 async function addTagToVideo(rawTag) {
@@ -735,16 +763,19 @@ function renderProgressBar() {
   const date = new Date(wp.lastWatchedAt);
   const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
 
-  const liveDuration = (videoEl && videoEl.duration > 0) ? videoEl.duration : 0;
-  const duration = liveDuration || wp.duration || 0;
+  const useGlobal = (wp.partCount > 1) && (wp.totalDuration > 0);
+  const displayPos = useGlobal ? (wp.globalPosition ?? 0) : (wp.lastPosition ?? 0);
+  const displayDur = useGlobal
+    ? wp.totalDuration
+    : ((videoEl && videoEl.duration > 0) ? videoEl.duration : (wp.duration || 0));
 
   let primary = `上次观看：${dateStr}`;
   let secondary = '';
-  if (duration > 0) {
-    const pct = Math.round((wp.lastPosition / duration) * 100);
+  if (displayDur > 0) {
+    const pct = Math.round((displayPos / displayDur) * 100);
     primary += ` — ${pct}%`;
     if (wp.completed) primary += ' ✓';
-    secondary = `${formatTimestamp(wp.lastPosition)} / ${formatTimestamp(duration)}`;
+    secondary = `${formatTimestamp(displayPos)} / ${formatTimestamp(displayDur)}`;
     fillEl.style.width = `${pct}%`;
   } else {
     if (wp.completed) primary += ' ✓';
@@ -803,11 +834,6 @@ function renderSettingsPanel() {
         <div><div class="ba-setting-label">观看进度追踪</div></div>
         <input class="ba-checkbox" type="checkbox" id="ba-feat-watchProgress"
           ${settings.features.watchProgress ? 'checked' : ''}>
-      </div>
-      <div class="ba-setting-row">
-        <div><div class="ba-setting-label">标注功能</div></div>
-        <input class="ba-checkbox" type="checkbox" id="ba-feat-annotations"
-          ${settings.features.annotations ? 'checked' : ''}>
       </div>
       <div class="ba-setting-row">
         <div><div class="ba-setting-label">摘要功能</div></div>
@@ -891,7 +917,7 @@ function renderSettingsPanel() {
   });
 
   // Feature toggles
-  ['watchProgress', 'annotations', 'summary', 'tags', 'rating'].forEach(feat => {
+  ['watchProgress', 'summary', 'tags', 'rating'].forEach(feat => {
     const el = document.getElementById(`ba-feat-${feat}`);
     if (!el) return;
     el.addEventListener('change', async () => {
@@ -907,73 +933,98 @@ function renderSettingsPanel() {
   });
 }
 function startNavObserver() {
-  const titleEl = document.querySelector('head title');
-  if (!titleEl) return;
+  function attachTitleObserver(titleEl) {
+    const observer = new MutationObserver(() => {
+      const newUrl = window.location.href;
+      if (newUrl === lastUrl) return;
+      lastUrl = newUrl;
 
-  const observer = new MutationObserver(() => {
+      const newBVId = extractBVId(newUrl);
+      if (!newBVId) return;
+
+      if (newBVId === currentBVId) {
+        // Same video — check if part changed
+        const newPart = extractPartNumber(newUrl);
+        if (newPart !== currentPart) {
+          // saveProgress() reads currentPart synchronously before its first await,
+          // so calling it here (before updating currentPart) correctly captures the old part.
+          if (currentRecord) saveProgress();
+          currentPart = newPart;
+          renderActiveTab();
+        }
+        return;
+      }
+
+      // Save progress for previous video before switching
+      if (currentBVId && currentRecord) saveProgress();
+
+      // Stop tracking previous video
+      stopProgressTracking();
+
+      currentBVId = newBVId;
+      currentPart = extractPartNumber(newUrl);
+      showAllParts = false;
+      activeTab = 'annotations';
+      ratingMode = 'simple';
+
+      // Reset tab UI
+      const root = document.getElementById('bili-annotator-root');
+      if (root) {
+        root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
+        const annoTab = root.querySelector('[data-tab="annotations"]');
+        if (annoTab) annoTab.classList.add('ba-active');
+      }
+
+      loadVideo();
+    });
+    observer.observe(titleEl, { childList: true });
+  }
+
+  const titleEl = document.querySelector('head title');
+  if (titleEl) {
+    attachTitleObserver(titleEl);
+  } else {
+    // Title element not yet in DOM — retry a few times
+    let attempts = 0;
+    const poll = setInterval(() => {
+      const el = document.querySelector('head title');
+      if (el) { clearInterval(poll); attachTitleObserver(el); return; }
+      if (++attempts >= 5) clearInterval(poll);
+    }, 500);
+  }
+
+  // popstate always registered regardless of title availability
+  window.addEventListener('popstate', () => {
     const newUrl = window.location.href;
     if (newUrl === lastUrl) return;
     lastUrl = newUrl;
-
     const newBVId = extractBVId(newUrl);
     if (!newBVId) return;
-
     if (newBVId === currentBVId) {
-      // Same video — check if part changed
       const newPart = extractPartNumber(newUrl);
       if (newPart !== currentPart) {
+        // saveProgress() reads currentPart synchronously before its first await,
+        // so calling it here (before updating currentPart) correctly captures the old part.
+        if (currentRecord) saveProgress();
         currentPart = newPart;
         renderActiveTab();
       }
       return;
     }
-
-    // Save progress for previous video before switching
     if (currentBVId && currentRecord) saveProgress();
-
-    // Stop tracking previous video
     stopProgressTracking();
-
     currentBVId = newBVId;
     currentPart = extractPartNumber(newUrl);
     showAllParts = false;
     activeTab = 'annotations';
     ratingMode = 'simple';
-
-    // Reset tab UI
     const root = document.getElementById('bili-annotator-root');
     if (root) {
       root.querySelectorAll('.ba-tab').forEach(t => t.classList.remove('ba-active'));
       const annoTab = root.querySelector('[data-tab="annotations"]');
       if (annoTab) annoTab.classList.add('ba-active');
     }
-
     loadVideo();
-  });
-
-  observer.observe(titleEl, { childList: true });
-
-  // Also handle popstate for back/forward navigation
-  window.addEventListener('popstate', () => {
-    const newUrl = window.location.href;
-    if (newUrl !== lastUrl) {
-      lastUrl = newUrl;
-      const newBVId = extractBVId(newUrl);
-      if (!newBVId) return;
-      if (newBVId === currentBVId) {
-        const newPart = extractPartNumber(newUrl);
-        if (newPart !== currentPart) {
-          currentPart = newPart;
-          renderActiveTab();
-        }
-        return;
-      }
-      stopProgressTracking();
-      currentBVId = newBVId;
-      currentPart = extractPartNumber(newUrl);
-      showAllParts = false;
-      loadVideo();
-    }
   });
 }
 
@@ -982,15 +1033,28 @@ function stopProgressTracking() {
     clearInterval(progressIntervalId);
     progressIntervalId = null;
   }
+  if (seekSaveTimer) {
+    clearTimeout(seekSaveTimer);
+    seekSaveTimer = null;
+  }
+  if (trackingHandlers) {
+    const { videoEl: el, pause, ended, seeked, visibility } = trackingHandlers;
+    if (el) {
+      el.removeEventListener('pause', pause);
+      el.removeEventListener('ended', ended);
+      el.removeEventListener('seeked', seeked);
+    }
+    document.removeEventListener('visibilitychange', visibility);
+    trackingHandlers = null;
+  }
+  window.removeEventListener('beforeunload', saveProgress);
 }
 function startFullscreenObserver() {
-  const hint = document.getElementById('bili-annotator-fullscreen-hint');
   const root = document.getElementById('bili-annotator-root');
 
   function onFullscreenChange(isFullscreen) {
-    if (!root || !hint) return;
+    if (!root) return;
     root.style.display = isFullscreen ? 'none' : '';
-    hint.classList.toggle('ba-visible', isFullscreen);
   }
 
   // Standard fullscreen API
@@ -1052,11 +1116,46 @@ async function findVideoEl() {
   console.debug('[bili-annotator] Video element not found after 10 attempts');
   return null;
 }
+function getPartDurations() {
+  try {
+    const pages = window.__INITIAL_STATE__?.videoData?.pages;
+    if (!Array.isArray(pages) || pages.length < 2) return null;
+    const durations = pages.map(p => {
+      const d = p?.duration;
+      return (typeof d === 'number' && isFinite(d) && d > 0) ? Math.floor(d) : null;
+    });
+    if (durations.some(d => d === null)) return null;
+    return durations;
+  } catch {
+    return null;
+  }
+}
+
 function startProgressTracking() {
   if (!videoEl) return;
 
-  progressIntervalId = setInterval(saveProgress, (settings.progressInterval || 30) * 1000);
+  const debouncedSave = () => {
+    clearTimeout(seekSaveTimer);
+    seekSaveTimer = setTimeout(saveProgress, 2000);
+  };
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') saveProgress();
+  };
 
+  videoEl.addEventListener('pause', saveProgress);
+  videoEl.addEventListener('ended', saveProgress);
+  videoEl.addEventListener('seeked', debouncedSave);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
+  trackingHandlers = {
+    videoEl,
+    pause: saveProgress,
+    ended: saveProgress,
+    seeked: debouncedSave,
+    visibility: onVisibilityChange,
+  };
+
+  progressIntervalId = setInterval(saveProgress, (settings.progressInterval || 30) * 1000);
   window.addEventListener('beforeunload', saveProgress, { once: true });
 }
 
@@ -1065,13 +1164,33 @@ async function saveProgress() {
   if (!videoEl.duration || videoEl.duration === 0 || !isFinite(videoEl.duration)) return;
 
   const now = new Date().toISOString();
-  currentRecord.watchProgress = {
+  const pos = Math.floor(videoEl.currentTime);
+  const dur = Math.floor(videoEl.duration);
+
+  const wp = {
     lastWatchedAt: now,
-    lastPosition: Math.floor(videoEl.currentTime),
-    duration: Math.floor(videoEl.duration),
-    completed: videoEl.currentTime / videoEl.duration > 0.9
+    lastPosition: pos,
+    duration: dur,
+    completed: pos / dur > 0.9,
   };
 
+  const partDurations = getPartDurations();
+  if (partDurations !== null) {
+    const partIndex = currentPart - 1;
+    if (partIndex >= 0 && partIndex < partDurations.length) {
+      const offsetBefore = partDurations.slice(0, partIndex).reduce((s, d) => s + d, 0);
+      const totalDuration = partDurations.reduce((s, d) => s + d, 0);
+      const globalPosition = offsetBefore + pos;
+      wp.globalPosition = globalPosition;
+      wp.totalDuration = totalDuration;
+      wp.partCount = partDurations.length;
+      wp.partDurations = partDurations;
+      wp.currentPart = currentPart;
+      wp.completed = totalDuration > 0 && globalPosition / totalDuration > 0.9;
+    }
+  }
+
+  currentRecord.watchProgress = wp;
   await BiliStorage.saveVideo(currentBVId, currentRecord);
   renderProgressBar();
 }
