@@ -42,64 +42,11 @@ async function init() {
   });
 }
 
-function renderToDataUrl(img, maxW, maxH, quality) {
-  let w = img.width, h = img.height;
-  if (w > maxW || h > maxH) {
-    const ratio = Math.min(maxW / w, maxH / h);
-    w = Math.round(w * ratio);
-    h = Math.round(h * ratio);
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL('image/jpeg', quality);
-}
-
-async function captureThumbnailAsDataUrl(urls) {
-  for (const url of urls) {
-    if (!url || !url.startsWith('http')) continue;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) await new Promise(r => setTimeout(r, 1000));
-        const resp = await fetch(url);
-        if (!resp.ok) break; // this URL is bad, try next source
-        const blob = await resp.blob();
-        const bitmapUrl = URL.createObjectURL(blob);
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = bitmapUrl;
-        });
-        let dataUrl = renderToDataUrl(img, 320, 180, 0.7);
-        if (dataUrl.length > 100_000) dataUrl = renderToDataUrl(img, 320, 180, 0.4);
-        if (dataUrl.length > 100_000) dataUrl = renderToDataUrl(img, 240, 135, 0.4);
-        URL.revokeObjectURL(bitmapUrl);
-        return dataUrl;
-      } catch {
-        // network or decode error — retry or try next source
-      }
-    }
-  }
-  console.warn('[bili-annotator] Thumbnail capture failed for all sources');
-  return null;
-}
-
 async function loadVideo() {
   const title = document.querySelector('h1')?.textContent?.trim() || currentBVId;
   const url = window.location.href;
 
-  // Gather thumbnail candidates in priority order
-  const ogImage = document.querySelector('meta[property="og:image"]')?.content || null;
-  const stateImage = (() => {
-    const pic = window.__INITIAL_STATE__?.videoData?.pic;
-    return pic ? (pic.startsWith('http') ? pic : 'https:' + pic) : null;
-  })();
-  const posterImage = document.querySelector('video')?.poster || null;
-  const thumbCandidates = [ogImage, stateImage, posterImage].filter(Boolean);
-
-  currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url, ogImage);
+  currentRecord = await BiliStorage.getOrCreateVideo(currentBVId, title, url);
 
   // Patch title if it was stored as the BV ID fallback on a previous visit
   if (currentRecord.title === currentBVId && title !== currentBVId) {
@@ -107,23 +54,6 @@ async function loadVideo() {
     await BiliStorage.saveVideo(currentBVId, currentRecord);
   }
 
-  // Convert HTTP thumbnail URLs to data URLs so dashboard can load them
-  // (Bilibili CDN rejects requests without a bilibili.com referer)
-  if (currentRecord.thumbnailUrl && currentRecord.thumbnailUrl.startsWith('http')) {
-    const dataUrl = await captureThumbnailAsDataUrl(
-      [currentRecord.thumbnailUrl, ...thumbCandidates]
-    );
-    // On failure, null out the HTTP URL so the dashboard shows a clean placeholder
-    currentRecord.thumbnailUrl = dataUrl;
-    await BiliStorage.saveVideo(currentBVId, currentRecord);
-  } else if (!currentRecord.thumbnailUrl && thumbCandidates.length > 0) {
-    // No thumbnail yet (record predates capture code, or first capture failed)
-    const dataUrl = await captureThumbnailAsDataUrl(thumbCandidates);
-    if (dataUrl) {
-      currentRecord.thumbnailUrl = dataUrl;
-      await BiliStorage.saveVideo(currentBVId, currentRecord);
-    }
-  }
   isMultiPart = !!document.querySelector('.video-sections-content') ||
                 extractPartNumber(url) > 1;
 

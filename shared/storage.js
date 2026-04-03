@@ -14,13 +14,12 @@ const BiliStorage = (() => {
     }
   };
 
-  function makeDefaultRecord(bvId, title, url, thumbnailUrl) {
+  function makeDefaultRecord(bvId, title, url) {
     const now = new Date().toISOString();
     return {
       videoId: bvId,
       title: title || bvId,
       url: url || `https://www.bilibili.com/video/${bvId}`,
-      thumbnailUrl: thumbnailUrl || null,
       summaryShort: '',
       summaryLong: '',
       rating: null,
@@ -39,10 +38,10 @@ const BiliStorage = (() => {
     return result[bvId] || null;
   }
 
-  async function getOrCreateVideo(bvId, title, url, thumbnailUrl) {
+  async function getOrCreateVideo(bvId, title, url) {
     const existing = await getVideo(bvId);
     if (existing) return existing;
-    const record = makeDefaultRecord(bvId, title, url, thumbnailUrl);
+    const record = makeDefaultRecord(bvId, title, url);
     await chrome.storage.local.set({ [bvId]: record });
     return record;
   }

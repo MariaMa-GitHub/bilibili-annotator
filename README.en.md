@@ -85,7 +85,7 @@ Accessible via the ⚙ icon in the sidebar footer.
 
 ## Data
 
-All data lives in `chrome.storage.local` under the extension's origin. No external requests are made. Storage is unrestricted (`unlimitedStorage` permission) to accommodate thumbnail images.
+All data lives in `chrome.storage.local` under the extension's origin. No external requests are made.
 
 Each video is stored by its BV ID. The export format is plain JSON — human-readable and easy to process with other tools.
 
@@ -93,7 +93,7 @@ Each video is stored by its BV ID. The export format is plain JSON — human-rea
 
 ## Technical notes
 
-- Manifest V3, with `unlimitedStorage` permission
+- Manifest V3
 - Vanilla JS (ES2020+), no frameworks, no build tools
 - No external dependencies
 - Content scripts share scope via manifest load order (`utils.js` → `storage.js` → `content.js`)

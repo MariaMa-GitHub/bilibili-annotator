@@ -85,7 +85,7 @@
 
 ## 数据说明
 
-所有数据存储在扩展的 `chrome.storage.local` 中，不会发起任何外部请求。存储空间无上限（使用 `unlimitedStorage` 权限）。
+所有数据存储在扩展的 `chrome.storage.local` 中，不会发起任何外部请求。
 
 每个视频以 BV 号为键存储。导出格式为纯 JSON，便于阅读和用其他工具处理。
 
@@ -93,7 +93,7 @@
 
 ## 技术说明
 
-- Manifest V3，使用 `unlimitedStorage` 权限
+- Manifest V3
 - 原生 JS（ES2020+），无框架，无构建工具
 - 无外部依赖
 - 内容脚本通过 manifest 加载顺序共享作用域（`utils.js` → `storage.js` → `content.js`）
