@@ -24,8 +24,15 @@
   ],
   "commands": {
     "quick-annotate": {
-      "suggested_key": { "default": "Alt+A" },
       "description": "打开快速添加标注"
+    },
+    "toggle-sidebar": {
+      "suggested_key": { "default": "Alt+S" },
+      "description": "展开/收起侧边栏"
+    },
+    "open-dashboard": {
+      "suggested_key": { "default": "Alt+D" },
+      "description": "打开视频库"
     }
   }
 }

@@ -35,31 +35,37 @@ This extension is not on the Chrome Web Store. Load it as an unpacked extension:
 
 ### Sidebar
 
-The sidebar appears on any `bilibili.com/video/*` page.
+The sidebar appears on any `www.bilibili.com/video/*` page.
 
-- **Toggle** — click the tab on the right edge of the screen, or click the extension icon.
+- **Toggle** — click the tab on the right edge of the screen, click the extension icon, or press `Alt+S`.
 - **Keyboard shortcut** — `Alt+A` opens the annotation form pre-filled with the current timestamp. Configurable in Settings.
 - **Fullscreen** — the sidebar hides automatically in fullscreen and full-webpage mode, and restores when you exit.
 
 ### Dashboard
 
-Click the extension icon on any non-Bilibili video page to open the dashboard in a new tab. Cards show the video title, tags, a watch progress bar, exact timestamp, and last-watched date.
+Press `Alt+D` from any page, or click the extension icon on any non-Bilibili video page, to open the dashboard in a new tab. Cards show the video title, tags, a watch progress bar, exact timestamp, and last-watched date.
 
 ### Export / Import
 
 In the dashboard, use **导出数据** to download a `.json` backup. Use **导入数据** to restore — choose to skip existing records or overwrite them.
 
+The export file contains all data (video records, tag index, settings). On import, only video records and the tag index are restored; **settings are intentionally not imported** to prevent accidentally overwriting your local preferences via a shared file.
+
 ---
 
-## Keyboard Shortcut
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
 | `Alt+A` | Open annotation form at current timestamp |
+| `Alt+S` | Toggle sidebar |
+| `Alt+D` | Open dashboard |
 
-The shortcut can be changed in two ways:
+`Alt+S` and `Alt+D` are browser-level shortcuts and can be changed at `chrome://extensions/shortcuts` — they work even when focus is in the video player.
+
+`Alt+A` can be changed in two ways:
 - **In-extension**: via the ⚙ Settings panel in the sidebar (applies when the page has focus)
-- **Browser-level**: via `chrome://extensions/shortcuts` (works even when focus is in the video player)
+- **Browser-level**: via `chrome://extensions/shortcuts` (works even when focus is in the video player; the `quick-annotate` entry has no default binding — set it manually if you want browser-level control)
 
 ---
 
