@@ -280,11 +280,17 @@ function bindEvents() {
     });
   });
 
-  // Star rating filter
-  document.getElementById('db-rating-filter').addEventListener('change', (e) => {
-    ratingFilter = e.target.value;
-    currentPage = 1;
-    renderGrid();
+  // Star rating toggle buttons (mutually exclusive)
+  document.querySelectorAll('#db-star3-filter, #db-star4-filter, #db-star5-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.value;
+      ratingFilter = ratingFilter === value ? '' : value;
+      document.querySelectorAll('#db-star3-filter, #db-star4-filter, #db-star5-filter').forEach(b =>
+        b.classList.toggle('active', b.dataset.value === ratingFilter)
+      );
+      currentPage = 1;
+      renderGrid();
+    });
   });
 
   // Sort

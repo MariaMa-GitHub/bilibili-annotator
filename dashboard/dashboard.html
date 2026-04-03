@@ -29,12 +29,11 @@
       <button class="db-toggle-btn" id="db-like-filter" data-value="like" title="已点赞">👍</button>
       <button class="db-toggle-btn" id="db-dislike-filter" data-value="dislike" title="已点踩">👎</button>
     </div>
-    <select class="db-select" id="db-rating-filter">
-      <option value="">全部评分</option>
-      <option value="star3">⭐ 3星及以上</option>
-      <option value="star4">⭐ 4星及以上</option>
-      <option value="star5">⭐ 5星</option>
-    </select>
+    <div class="db-toggle-group">
+      <button class="db-toggle-btn" id="db-star3-filter" data-value="star3">3★+</button>
+      <button class="db-toggle-btn" id="db-star4-filter" data-value="star4">4★+</button>
+      <button class="db-toggle-btn" id="db-star5-filter" data-value="star5">5★</button>
+    </div>
     <div class="db-spacer"></div>
     <span class="db-filter-label">排序：</span>
     <select class="db-select" id="db-sort">
