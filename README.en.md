@@ -2,7 +2,7 @@
 
 A Chrome extension for annotating Bilibili videos. Add timestamped notes, summaries, tags, and ratings to any video — all stored locally in your browser.
 
-[中文](README.md)
+[中文版](README.md)
 
 ---
 
