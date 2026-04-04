@@ -2,7 +2,7 @@
 
 一款用于标注 Bilibili 视频的 Chrome 扩展程序。为任意视频添加带时间戳的笔记、摘要、标签和评分——所有数据均存储在本地浏览器中。
 
-[English](README.en.md)
+[English Version](README.en.md)
 
 ---
 
